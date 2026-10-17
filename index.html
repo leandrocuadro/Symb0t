@@ -106,11 +106,17 @@
   .campo input.mono { font-family: var(--mono); }
   .campo input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.2); }
   .campo input:disabled { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
-  .nombre {
-    font-size: 16px; font-weight: 700; padding: 9px 14px;
-    background: var(--primary-light); border: 1px solid var(--primary-border); border-radius: 6px;
-    align-self: flex-end;
+  .campo-nombre { flex: 1 1 340px; position: relative; }
+  .campo-nombre input { width: 100%; }
+  .sugerencias {
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 10; margin-top: 4px;
+    list-style: none; background: #fff; border: 1px solid var(--border); border-radius: 6px;
+    box-shadow: 0 6px 16px rgba(0,0,0,.15); max-height: 280px; overflow: auto;
   }
+  .sugerencias li { padding: 8px 12px; font-size: 13.5px; cursor: pointer; border-bottom: 1px solid var(--border-light); }
+  .sugerencias li:last-child { border-bottom: none; }
+  .sugerencias li:hover, .sugerencias li.activo { background: var(--primary-light); }
+  .sugerencias li.sin { color: var(--light); cursor: default; font-style: italic; }
   .ayuda { font-size: 12.5px; color: var(--light); font-style: italic; align-self: center; }
 
   .aviso {
@@ -130,6 +136,8 @@
   .btn-primario:hover:not(:disabled) { background: var(--primary-hover); }
   .btn-excel { background: #107c41; color: #fff; }
   .btn-excel:hover:not(:disabled) { background: #0b5a2f; }
+  .btn-secundario { background: #fff; color: var(--primary); border-color: var(--primary-border); }
+  .btn-secundario:hover:not(:disabled) { background: var(--primary-light); }
 
   .resultado {
     margin-top: 6px; padding: 16px 18px;
@@ -138,6 +146,10 @@
   .res-label { font-size: 11px; font-weight: 700; color: var(--light); letter-spacing: .5px; }
   .res-codigo { font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--primary); margin-top: 4px; }
   .res-error { color: var(--red); font-weight: 600; font-size: 14px; }
+  .res-fila { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
+  .res-col-detalle { flex: 1 1 280px; min-width: 0; }
+  .res-detalle { font-size: 16px; font-weight: 600; margin-top: 4px; line-height: 1.4; }
+  .res-sin { font-size: 13px; color: var(--light); font-style: italic; margin-top: 6px; }
   .advertencia {
     margin-top: 10px; font-size: 13px; color: #92400e;
     background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 8px 12px;
@@ -186,7 +198,11 @@
         <label for="nroStd">Nro. de cliente</label>
         <input id="nroStd" inputmode="numeric" autocomplete="off" placeholder="Ej: 22434">
       </div>
-      <div class="nombre" id="nombreStd" hidden></div>
+      <div class="campo campo-nombre">
+        <label for="buscaStd">Nombre de cliente</label>
+        <input id="buscaStd" autocomplete="off" placeholder="Escribí parte del nombre">
+        <ul class="sugerencias" id="sugStd" role="listbox" hidden></ul>
+      </div>
     </div>
     <p class="aviso error" id="avisoStd" hidden></p>
     <div class="fila">
@@ -209,7 +225,11 @@
         <label for="nroAdv">Nro. de cliente</label>
         <input id="nroAdv" inputmode="numeric" autocomplete="off" placeholder="Ej: 22434">
       </div>
-      <div class="nombre" id="nombreAdv" hidden></div>
+      <div class="campo campo-nombre">
+        <label for="buscaAdv">Nombre de cliente</label>
+        <input id="buscaAdv" autocomplete="off" placeholder="Escribí parte del nombre">
+        <ul class="sugerencias" id="sugAdv" role="listbox" hidden></ul>
+      </div>
     </div>
     <p class="aviso error" id="avisoAdv" hidden></p>
     <div class="fila">
@@ -217,6 +237,7 @@
         📂 Cargar Excel
         <input type="file" id="archivoAdv" accept=".xlsx,.xls,.csv" disabled hidden>
       </label>
+      <button class="btn btn-secundario" id="btnPlantilla" type="button">📄 Descargar plantilla</button>
       <span class="ayuda" id="ayudaArchivo">Ingresá un cliente válido para habilitar la carga.</span>
     </div>
     <div class="resumen" id="resumenAdv" hidden></div>
@@ -224,10 +245,10 @@
     <div class="tabla-wrap">
       <table>
         <thead>
-          <tr><th>NRO ITEM</th><th>SIMBOLO</th><th>CODIGO</th></tr>
+          <tr><th>NRO ITEM</th><th>SIMBOLO</th><th>CODIGO</th><th>DETALLE</th></tr>
         </thead>
         <tbody id="tbodyAdv">
-          <tr><td colspan="3" class="vacio">Sin resultados.</td></tr>
+          <tr><td colspan="4" class="vacio">Sin resultados.</td></tr>
         </tbody>
       </table>
     </div>
@@ -244,6 +265,7 @@
   // ---------- Fuentes de datos (GitHub) ----------
   const URL_CLIENTES = 'https://raw.githubusercontent.com/leandrocuadro/clientesegu/refs/heads/main/clientes.csv';
   const URL_BASE = clave => `https://raw.githubusercontent.com/leandrocuadro/SIMBOLOS/refs/heads/main/${encodeURIComponent(clave)}.csv`;
+  const URL_PRODUCTOS = 'https://raw.githubusercontent.com/leandrocuadro/productos.csv/refs/heads/main/productos.csv';
 
   const MENSAJES = {
     inexistente: 'El nro de cliente no existe en la base de clientes.',
@@ -259,8 +281,8 @@
 
   const $ = id => document.getElementById(id);
   const SEC = {
-    std: { nro: $('nroStd'), nombre: $('nombreStd'), aviso: $('avisoStd') },
-    adv: { nro: $('nroAdv'), nombre: $('nombreAdv'), aviso: $('avisoAdv') }
+    std: { nro: $('nroStd'), busca: $('buscaStd'), sug: $('sugStd'), aviso: $('avisoStd') },
+    adv: { nro: $('nroAdv'), busca: $('buscaAdv'), sug: $('sugAdv'), aviso: $('avisoAdv') }
   };
 
   // ---------- Utilidades ----------
@@ -363,6 +385,43 @@
     return base;
   }
 
+  // Base de productos (código interno -> nombre). Se carga una sola vez.
+  let productosPromesa = null;
+  function cargarProductos() {
+    if (!productosPromesa) {
+      productosPromesa = (async () => {
+        const res = await fetch(URL_PRODUCTOS);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const filas = parsearCSV(decodificar(await res.arrayBuffer()));
+        const cab = filas[0].map(normalizar);
+        const iC = cab.indexOf('codigo'), iN = cab.indexOf('nombre');
+        if (iC < 0 || iN < 0) throw new Error('El archivo de productos no tiene las columnas Código y Nombre');
+        const mapa = new Map();   // código -> { nombre, repetido }
+        for (const f of filas.slice(1)) {
+          const cod = (f[iC] || '').trim();
+          const nom = (f[iN] || '').replace(/\s+/g, ' ').trim();
+          if (!cod) continue;
+          const previo = mapa.get(cod);
+          if (!previo) mapa.set(cod, { nombre: nom, repetido: false });
+          else if (!previo.nombre && nom) previo.nombre = nom;
+          else if (nom && previo.nombre !== nom) previo.repetido = true;   // se respeta el primero
+        }
+        return mapa;
+      })().catch(err => { productosPromesa = null; throw err; });
+    }
+    return productosPromesa;
+  }
+
+  async function buscarProducto(cod) {
+    try {
+      const p = (await cargarProductos()).get(cod);
+      return { ok: true, nombre: p ? p.nombre : '', repetido: p ? p.repetido : false };
+    } catch (err) {
+      console.error(err);
+      return { ok: false };
+    }
+  }
+
   // ---------- Validación del cliente (orden: clientes.csv, luego SIMBOLOS) ----------
   async function evaluarCliente(clave) {
     if (!clave) return { estado: 'vacio' };
@@ -406,7 +465,7 @@
   function reiniciarCliente(sec) {
     seq[sec]++;
     estado[sec] = null;
-    SEC[sec].nombre.hidden = true;
+    SEC[sec].busca.value = '';
     SEC[sec].aviso.hidden = true;
     habilitarControles(sec);
     limpiarResultado(sec);
@@ -425,8 +484,7 @@
     if (id !== seq[sec]) return;                 // llegó una respuesta vieja
 
     estado[sec] = r.estado === 'ok' ? r : null;
-    S.nombre.textContent = r.estado === 'ok' ? r.nombre : '';
-    S.nombre.hidden = r.estado !== 'ok';
+    if (r.estado === 'ok') S.busca.value = `${r.clave}-${r.nombre}`;
     const msg = MENSAJES[r.estado] || '';
     S.aviso.className = 'aviso error';
     S.aviso.textContent = msg;
@@ -446,8 +504,84 @@
     });
   }
 
+  // ---------- Autocompletado por nombre de cliente ----------
+  // Muestra "nro - nombre". Al elegir uno, carga el nro y valida el cliente como si se hubiera tipeado.
+  function configurarAutocompletado(sec) {
+    const S = SEC[sec];
+    const input = S.busca;
+    const lista = S.sug;
+    let items = [];
+    let activo = -1;
+
+    const cerrar = () => { lista.hidden = true; lista.innerHTML = ''; items = []; activo = -1; };
+    const marcar = i => {
+      activo = i;
+      [...lista.querySelectorAll('li[data-i]')].forEach(li => li.classList.toggle('activo', +li.dataset.i === i));
+    };
+    const elegir = clave => {
+      cerrar();
+      S.nro.value = clave;
+      reiniciarCliente(sec);
+      actualizarCliente(sec);
+    };
+
+    input.addEventListener('focus', () => input.select());
+    input.addEventListener('input', () => {
+      const q = normalizar(input.value);
+      if (!q || !clientes.size) { cerrar(); return; }
+      const esNumero = /^\d+$/.test(q);
+      items = [];
+      for (const [clave, nombre] of clientes) {
+        if (esNumero ? clave.startsWith(q) : normalizar(nombre).includes(q)) {
+          items.push({ clave, nombre });
+          if (items.length >= 12) break;
+        }
+      }
+      activo = -1;
+      lista.innerHTML = items.length
+        ? items.map((it, i) => `<li role="option" data-i="${i}"><span class="mono">${esc(it.clave)}</span> - ${esc(it.nombre)}</li>`).join('')
+        : '<li class="sin">Sin coincidencias</li>';
+      lista.hidden = false;
+    });
+    lista.addEventListener('mousedown', e => {
+      const li = e.target.closest('li[data-i]');
+      if (!li) return;
+      e.preventDefault();                      // evita que se pierda el foco antes de elegir
+      elegir(items[+li.dataset.i].clave);
+    });
+    input.addEventListener('keydown', e => {
+      if (lista.hidden) return;
+      if (e.key === 'ArrowDown' && items.length) { e.preventDefault(); marcar(Math.min(activo + 1, items.length - 1)); }
+      else if (e.key === 'ArrowUp' && items.length) { e.preventDefault(); marcar(Math.max(activo - 1, 0)); }
+      else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (activo >= 0) elegir(items[activo].clave);
+        else if (items.length === 1) elegir(items[0].clave);
+      }
+      else if (e.key === 'Escape') cerrar();
+    });
+    input.addEventListener('blur', () => setTimeout(cerrar, 150));
+  }
+  configurarAutocompletado('std');
+  configurarAutocompletado('adv');
+
+  // ---------- Plantilla de símbolos ----------
+  $('btnPlantilla').addEventListener('click', () => {
+    if (typeof XLSX === 'undefined') {
+      SEC.adv.aviso.className = 'aviso error';
+      SEC.adv.aviso.textContent = 'No se pudo cargar la librería de Excel. Revisá tu conexión.';
+      SEC.adv.aviso.hidden = false;
+      return;
+    }
+    const hoja = XLSX.utils.aoa_to_sheet([['SIMBOLO']]);
+    hoja['!cols'] = [{ wch: 18 }];
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Simbolos');
+    XLSX.writeFile(libro, 'Plantilla_simbolos_Symb0t.xlsx');
+  });
+
   // ---------- Búsqueda estándar ----------
-  function buscarStd() {
+  async function buscarStd() {
     const e = estado.std;
     const sim = $('simStd').value.trim();
     if (!e || !sim) return;
@@ -474,9 +608,27 @@
       avisos.push(`El código ${cod} también está asociado a los símbolos: ${otros.join(', ')}. Revisá la base antes de usarlo.`);
     }
 
+    const producto = await buscarProducto(cod);
+    if (estado.std !== e || $('simStd').value.trim() !== sim) return;   // cambió la consulta mientras tanto
+
+    let detalle;
+    if (!producto.ok) {
+      detalle = '<div class="res-sin">No se pudo cargar la base de productos. Verificá tu conexión.</div>';
+    } else if (!producto.nombre) {
+      detalle = '<div class="res-sin">Este código no figura en la base de productos.</div>';
+    } else {
+      detalle = `<div class="res-detalle">${esc(producto.nombre)}</div>`;
+      if (producto.repetido) {
+        avisos.push(`El código ${cod} aparece en la base de productos con nombres distintos. Se muestra el primero.`);
+      }
+    }
+
     out.innerHTML =
-      '<div class="res-label">CÓDIGO</div>' +
-      `<div class="res-codigo">${esc(cod)}</div>` +
+      '<div class="res-fila">' +
+        '<div><div class="res-label">CÓDIGO</div>' +
+        `<div class="res-codigo">${esc(cod)}</div></div>` +
+        `<div class="res-col-detalle"><div class="res-label">DETALLE</div>${detalle}</div>` +
+      '</div>' +
       avisos.map(a => `<div class="advertencia">⚠️ ${esc(a)}</div>`).join('');
     out.hidden = false;
   }
@@ -489,7 +641,7 @@
   function renderAdv() {
     const tbody = $('tbodyAdv');
     if (!resultadosAdv.length) {
-      tbody.innerHTML = '<tr><td colspan="3" class="vacio">Sin resultados.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" class="vacio">Sin resultados.</td></tr>';
       return;
     }
     tbody.innerHTML = resultadosAdv.map(r =>
@@ -497,6 +649,7 @@
         <td class="mono">${r.item}</td>
         <td class="mono">${esc(r.simbolo)}</td>
         <td class="mono ${r.codigo === '0' ? 'cero' : ''}">${esc(r.codigo)}</td>
+        <td>${esc(r.detalle)}</td>
       </tr>`
     ).join('');
   }
@@ -546,11 +699,33 @@
       for (let r = 1; r <= fin; r++) {
         const simbolo = String((filas[r] || [])[0] ?? '').trim();
         const codigo = simbolo ? (e.base.simbolos.get(simbolo) || '0') : '0';
-        res.push({ item: r, simbolo, codigo });
+        res.push({ item: r, simbolo, codigo, detalle: '' });
       }
+
+      // Detalle del artículo desde productos.csv (columna Nombre)
+      const avisosDetalle = [];
+      let mapa = null;
+      try { mapa = await cargarProductos(); }
+      catch (err) { console.error(err); }
+      if (!mapa) {
+        avisosDetalle.push('No se pudo cargar la base de productos: el detalle no está disponible. Revisá tu conexión.');
+      } else {
+        const repetidos = new Set();
+        for (const r of res) {
+          if (r.codigo === '0') { r.detalle = ''; continue; }
+          const p = mapa.get(r.codigo);
+          r.detalle = p ? p.nombre : 'Sin detalle en la base de productos';
+          if (p && p.repetido) repetidos.add(r.codigo);
+        }
+        if (repetidos.size) {
+          avisosDetalle.push(`${repetidos.size} código(s) aparecen en la base de productos con nombres distintos: ${[...repetidos].join(', ')}. Se muestra el primero.`);
+        }
+      }
+
       resultadosAdv = res;
       renderAdv();
       mostrarResumenAdv();
+      $('advertenciasAdv').innerHTML += avisosDetalle.map(a => `<div class="advertencia">⚠️ ${esc(a)}</div>`).join('');
       $('btnExport').disabled = false;
     } catch (err) {
       resultadosAdv = [];
@@ -568,9 +743,9 @@
 
   $('btnExport').addEventListener('click', () => {
     if (!resultadosAdv.length || !estado.adv) return;
-    const datos = resultadosAdv.map(r => ({ 'NRO ITEM': r.item, 'SIMBOLO': r.simbolo, 'CODIGO': r.codigo }));
-    const hoja = XLSX.utils.json_to_sheet(datos, { header: ['NRO ITEM', 'SIMBOLO', 'CODIGO'] });
-    hoja['!cols'] = [{ wch: 10 }, { wch: 18 }, { wch: 14 }];
+    const datos = resultadosAdv.map(r => ({ 'NRO ITEM': r.item, 'SIMBOLO': r.simbolo, 'CODIGO': r.codigo, 'DETALLE': r.detalle }));
+    const hoja = XLSX.utils.json_to_sheet(datos, { header: ['NRO ITEM', 'SIMBOLO', 'CODIGO', 'DETALLE'] });
+    hoja['!cols'] = [{ wch: 10 }, { wch: 18 }, { wch: 14 }, { wch: 60 }];
     const libro = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(libro, hoja, 'Resultados');
     const fecha = new Date().toISOString().slice(0, 10);
@@ -578,6 +753,7 @@
   });
 
   cargarClientes();
+  cargarProductos().catch(() => {});   // precarga; si falla, se reintenta al buscar
 </script>
 </body>
 </html>
