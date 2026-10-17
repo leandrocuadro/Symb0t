@@ -2,6 +2,20 @@
 
 Todos los cambios notables de este proyecto se documentan en este archivo.
 
+## [0.2.0] - 2026-10-17
+
+### Agregado
+- Detalle del artículo (columna `Nombre` de `productos.csv`) en la búsqueda estándar, al lado del código.
+- Detalle del artículo en la búsqueda avanzada, como nueva columna DETALLE, también incluida en la exportación a Excel.
+- Campo **Nombre de cliente** con autocompletado en ambas búsquedas, con formato `nro - nombre`. Se navega con flechas, Enter y Esc.
+- Botón **Descargar plantilla** en la búsqueda avanzada, con la columna `SIMBOLO`.
+- Advertencias cuando un código de `productos.csv` tiene nombres distintos, o cuando no se puede cargar la base de productos.
+
+### Cambiado
+- El nro de cliente se replica entre la búsqueda estándar y la avanzada, y se valida en ambas.
+- El archivo principal pasa de `Symb0t.html` a `index.html`, para publicarlo en Vercel.
+- Nuevo logo AltF2, recortado y ajustado en la barra superior.
+
 ## [0.1.0] - 2026-10-17
 
 ### Agregado
