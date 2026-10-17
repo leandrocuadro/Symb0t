@@ -2,6 +2,12 @@
 
 Todos los cambios notables de este proyecto se documentan en este archivo.
 
+## [0.4.0] - 2026-10-17
+
+### Agregado
+- Marca del artículo (columna `Marca` de `productos.csv`): debajo del detalle en la búsqueda estándar, y como columna MARCA en la avanzada y en la exportación a Excel.
+- Botón **Limpiar resultado** en ambas búsquedas. En la estándar borra el símbolo y el código; en la avanzada borra la tabla, el resumen, las advertencias y el archivo cargado. El nro de cliente se mantiene.
+
 ## [0.3.0] - 2026-10-17
 
 ### Agregado

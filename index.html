@@ -137,6 +137,8 @@
   .btn-excel { background: #107c41; color: #fff; }
   .btn-excel:hover:not(:disabled) { background: #0b5a2f; }
   .btn-secundario { background: #fff; color: var(--primary); border-color: var(--primary-border); }
+  .btn-limpiar { background: #fff; color: var(--text); border-color: var(--border); box-shadow: var(--shadow-sm, none); }
+  .btn-limpiar:hover:not(:disabled) { background: #f9fafb; color: var(--red); border-color: var(--red-border); }
   .btn-secundario:hover:not(:disabled) { background: var(--primary-light); }
 
   .resultado {
@@ -177,6 +179,8 @@
   .res-fila { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
   .res-col-detalle { flex: 1 1 280px; min-width: 0; }
   .res-detalle { font-size: 16px; font-weight: 600; margin-top: 4px; line-height: 1.4; }
+  .res-marca { font-size: 14px; font-weight: 600; color: var(--muted); margin-top: 8px; }
+  .res-marca .res-label { display: inline-block; margin-right: 6px; }
   .res-sin { font-size: 13px; color: var(--light); font-style: italic; margin-top: 6px; }
   .advertencia {
     margin-top: 10px; font-size: 13px; color: #92400e;
@@ -239,6 +243,7 @@
         <input id="simStd" class="mono" autocomplete="off" placeholder="Ej: 40050104003" disabled>
       </div>
       <button class="btn btn-primario" id="btnStd" disabled>🔍 Buscar</button>
+      <button class="btn btn-limpiar" id="btnLimpiarStd" type="button">🧹 Limpiar resultado</button>
     </div>
     <div class="resultado" id="resStd" hidden></div>
   </section>
@@ -271,6 +276,7 @@
     <div class="resumen" id="resumenAdv" hidden></div>
     <div id="advertenciasAdv"></div>
     <div class="fila fila-fin">
+      <button class="btn btn-limpiar" id="btnLimpiarAdv" type="button">🧹 Limpiar resultado</button>
       <button class="btn btn-excel" id="btnExport" disabled>📊 Exportar a Excel</button>
     </div>
     <div class="tabla-wrap">
@@ -280,12 +286,13 @@
           <col style="width: 200px">
           <col style="width: 160px">
           <col>
+          <col style="width: 160px">
         </colgroup>
         <thead>
-          <tr><th>NRO ITEM</th><th>SIMBOLO</th><th>CODIGO</th><th>DETALLE</th></tr>
+          <tr><th>NRO ITEM</th><th>SIMBOLO</th><th>CODIGO</th><th>DETALLE</th><th>MARCA</th></tr>
         </thead>
         <tbody id="tbodyAdv">
-          <tr><td colspan="4" class="vacio">Sin resultados.</td></tr>
+          <tr><td colspan="5" class="vacio">Sin resultados.</td></tr>
         </tbody>
       </table>
     </div>
@@ -429,17 +436,21 @@
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const filas = parsearCSV(decodificar(await res.arrayBuffer()));
         const cab = filas[0].map(normalizar);
-        const iC = cab.indexOf('codigo'), iN = cab.indexOf('nombre');
+        const iC = cab.indexOf('codigo'), iN = cab.indexOf('nombre'), iM = cab.indexOf('marca');
         if (iC < 0 || iN < 0) throw new Error('El archivo de productos no tiene las columnas Código y Nombre');
-        const mapa = new Map();   // código -> { nombre, repetido }
+        const mapa = new Map();   // código -> { nombre, marca, repetido }
         for (const f of filas.slice(1)) {
           const cod = (f[iC] || '').trim();
           const nom = (f[iN] || '').replace(/\s+/g, ' ').trim();
+          const marca = iM >= 0 ? (f[iM] || '').replace(/\s+/g, ' ').trim() : '';
           if (!cod) continue;
           const previo = mapa.get(cod);
-          if (!previo) mapa.set(cod, { nombre: nom, repetido: false });
-          else if (!previo.nombre && nom) previo.nombre = nom;
-          else if (nom && previo.nombre !== nom) previo.repetido = true;   // se respeta el primero
+          if (!previo) mapa.set(cod, { nombre: nom, marca, repetido: false });
+          else {
+            if (!previo.nombre && nom) previo.nombre = nom;
+            if (!previo.marca && marca) previo.marca = marca;
+            if (nom && previo.nombre !== nom) previo.repetido = true;   // se respeta el primero
+          }
         }
         return mapa;
       })().catch(err => { productosPromesa = null; throw err; });
@@ -450,7 +461,7 @@
   async function buscarProducto(cod) {
     try {
       const p = (await cargarProductos()).get(cod);
-      return { ok: true, nombre: p ? p.nombre : '', repetido: p ? p.repetido : false };
+      return { ok: true, nombre: p ? p.nombre : '', marca: p ? p.marca : '', repetido: p ? p.repetido : false };
     } catch (err) {
       console.error(err);
       return { ok: false };
@@ -678,7 +689,8 @@
     } else if (!producto.nombre) {
       detalle = '<div class="res-sin">Este código no figura en la base de productos.</div>';
     } else {
-      detalle = `<div class="res-detalle">${esc(producto.nombre)}</div>`;
+      detalle = `<div class="res-detalle">${esc(producto.nombre)}</div>` +
+        (producto.marca ? `<div class="res-marca"><span class="res-label">MARCA</span> ${esc(producto.marca)}</div>` : '');
       if (producto.repetido) {
         avisos.push(`El código ${cod} aparece en la base de productos con nombres distintos. Se muestra el primero.`);
       }
@@ -695,6 +707,14 @@
   }
 
   $('btnStd').addEventListener('click', buscarStd);
+  // Limpia el resultado y el símbolo; el cliente se mantiene
+  $('btnLimpiarStd').addEventListener('click', () => {
+    $('simStd').value = '';
+    limpiarResultado('std');
+    $('simStd').focus();
+  });
+  // Limpia la tabla, el resumen y las advertencias; el cliente y el archivo cargado se reinician
+  $('btnLimpiarAdv').addEventListener('click', () => limpiarResultado('adv'));
   $('simStd').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); buscarStd(); } });
   $('simStd').addEventListener('input', () => { $('resStd').hidden = true; });
 
@@ -702,7 +722,7 @@
   function renderAdv() {
     const tbody = $('tbodyAdv');
     if (!resultadosAdv.length) {
-      tbody.innerHTML = '<tr><td colspan="4" class="vacio">Sin resultados.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="vacio">Sin resultados.</td></tr>';
       return;
     }
     tbody.innerHTML = resultadosAdv.map(r =>
@@ -711,6 +731,7 @@
         <td class="mono">${esc(r.simbolo)}</td>
         <td><span class="code-badge copiable ${r.codigo === '0' ? 'cero' : ''}" data-copiar="${esc(r.codigo)}" title="Haz clic para copiar">${esc(r.codigo)}</span></td>
         <td>${esc(r.detalle)}</td>
+        <td>${esc(r.marca)}</td>
       </tr>`
     ).join('');
   }
@@ -769,7 +790,7 @@
       for (let r = 1; r <= fin; r++) {
         const simbolo = String((filas[r] || [])[0] ?? '').trim();
         const codigo = simbolo ? (e.base.simbolos.get(simbolo) || '0') : '0';
-        res.push({ item: r, simbolo, codigo, detalle: '' });
+        res.push({ item: r, simbolo, codigo, detalle: '', marca: '' });
       }
 
       // Detalle del artículo desde productos.csv (columna Nombre)
@@ -782,9 +803,10 @@
       } else {
         const repetidos = new Set();
         for (const r of res) {
-          if (r.codigo === '0') { r.detalle = ''; continue; }
+          if (r.codigo === '0') { r.detalle = ''; r.marca = ''; continue; }
           const p = mapa.get(r.codigo);
           r.detalle = p ? p.nombre : 'Sin detalle en la base de productos';
+          r.marca = p ? p.marca : '';
           if (p && p.repetido) repetidos.add(r.codigo);
         }
         if (repetidos.size) {
@@ -812,9 +834,9 @@
 
   $('btnExport').addEventListener('click', () => {
     if (!resultadosAdv.length || !estado.adv) return;
-    const datos = resultadosAdv.map(r => ({ 'NRO ITEM': r.item, 'SIMBOLO': r.simbolo, 'CODIGO': r.codigo, 'DETALLE': r.detalle }));
-    const hoja = XLSX.utils.json_to_sheet(datos, { header: ['NRO ITEM', 'SIMBOLO', 'CODIGO', 'DETALLE'] });
-    hoja['!cols'] = [{ wch: 10 }, { wch: 18 }, { wch: 14 }, { wch: 60 }];
+    const datos = resultadosAdv.map(r => ({ 'NRO ITEM': r.item, 'SIMBOLO': r.simbolo, 'CODIGO': r.codigo, 'DETALLE': r.detalle, 'MARCA': r.marca }));
+    const hoja = XLSX.utils.json_to_sheet(datos, { header: ['NRO ITEM', 'SIMBOLO', 'CODIGO', 'DETALLE', 'MARCA'] });
+    hoja['!cols'] = [{ wch: 10 }, { wch: 18 }, { wch: 14 }, { wch: 60 }, { wch: 24 }];
     const libro = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(libro, hoja, 'Resultados');
     const fecha = new Date().toISOString().slice(0, 10);
