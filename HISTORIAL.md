@@ -8,7 +8,7 @@ Cada subida a GitHub agrega una entrada nueva con el número de versión, el tí
 
 ## v0.7.0 — Búsqueda masiva ampliada y vista más ancha
 
-**Fecha:** 2026-10-17 · **Commit:** `(se completa al subir)`
+**Fecha:** 2026-10-17 · **Commit:** `bae72f3`
 
 ### Agregado
 - Búsqueda masiva: nuevas columnas CÓD. ALT., CARACTERÍSTICA, CANT. POR BULTO y TIPO DE REPOSICIÓN, también incluidas en la exportación a Excel.
