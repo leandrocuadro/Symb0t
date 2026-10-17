@@ -6,6 +6,20 @@ Cada subida a GitHub agrega una entrada nueva con el número de versión, el tí
 
 ---
 
+## v0.6.0 — Plantilla de base de símbolos con duplicados resaltados
+
+**Fecha:** 2026-10-17 · **Commit:** `(se completa al subir)`
+
+### Agregado
+- **Plantilla Subida Símbolos Clientes** en la búsqueda estándar: plantilla Excel de dos columnas (`simbolo` y `codigo`) con formato condicional que marca en rojo los valores duplicados en cada columna. Se descarga sin depender de GitHub.
+- Botones **?** que explican cómo funciona cada plantilla.
+
+### Cambiado
+- El botón de la búsqueda avanzada se llama **Plantilla búsqueda masiva**.
+- Los dos botones de plantilla comparten la estética del botón de descarga original.
+
+---
+
 ## v0.5.0 — Información adicional del artículo en la búsqueda estándar
 
 **Fecha:** 2026-10-17 · **Commit:** `f60e1e3`

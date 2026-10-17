@@ -4,6 +4,16 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 
 Para el registro resumido por versión, ver [HISTORIAL.md](HISTORIAL.md).
 
+## [0.6.0] - 2026-10-17
+
+### Agregado
+- **Plantilla Subida Símbolos Clientes** en la búsqueda estándar: plantilla Excel de dos columnas (`simbolo` y `codigo`) con formato condicional que marca en rojo los valores duplicados en cada columna.
+- Botones **?** que explican cómo funciona cada plantilla.
+
+### Cambiado
+- El botón de la búsqueda avanzada se llama **Plantilla búsqueda masiva**.
+- Los dos botones de plantilla comparten la estética del botón de descarga original.
+
 ## [0.5.0] - 2026-10-17
 
 ### Agregado
