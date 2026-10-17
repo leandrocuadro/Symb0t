@@ -8,7 +8,7 @@ Cada subida a GitHub agrega una entrada nueva con el número de versión, el tí
 
 ## v0.5.0 — Información adicional del artículo en la búsqueda estándar
 
-**Fecha:** 2026-10-17 · **Commit:** `(se completa al subir)`
+**Fecha:** 2026-10-17 · **Commit:** `f60e1e3`
 
 ### Agregado
 - Búsqueda estándar: datos adicionales del artículo (Código alternativo, Característica, Cantidad por bulto y Tipo de reposición), en letra más chica debajo de la marca.
