@@ -4,6 +4,14 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 
 Para el registro resumido por versión, ver [HISTORIAL.md](HISTORIAL.md).
 
+## [0.5.0] - 2026-10-17
+
+### Agregado
+- Búsqueda estándar: datos adicionales del artículo (Código alternativo, Característica, Cantidad por bulto y Tipo de reposición), en letra más chica debajo de la marca.
+
+### Cambiado
+- Búsqueda estándar: el resultado se ordena por relevancia. Primero el detalle del artículo (grande), después la marca (destacada) y por último los datos menores.
+
 ## [0.4.1] - 2026-10-17
 
 ### Cambiado

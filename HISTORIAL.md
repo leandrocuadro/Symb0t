@@ -6,6 +6,18 @@ Cada subida a GitHub agrega una entrada nueva con el número de versión, el tí
 
 ---
 
+## v0.5.0 — Información adicional del artículo en la búsqueda estándar
+
+**Fecha:** 2026-10-17 · **Commit:** `(se completa al subir)`
+
+### Agregado
+- Búsqueda estándar: datos adicionales del artículo (Código alternativo, Característica, Cantidad por bulto y Tipo de reposición), en letra más chica debajo de la marca.
+
+### Cambiado
+- Búsqueda estándar: el resultado se ordena por relevancia. Primero el detalle del artículo (grande), después la marca (destacada) y por último los datos menores.
+
+---
+
 ## v0.4.1 — Sugerencias de campos en formato de oración
 
 **Fecha:** 2026-10-17 · **Commit:** `9c5dd26`

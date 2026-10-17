@@ -15,7 +15,7 @@ Si no recordás el nro de cliente, escribí parte del nombre en el campo **Nombr
 1. Ingresá el **nro de cliente** (o elegilo por nombre).
 2. Si el cliente existe y tiene base de símbolos cargada, se habilita el campo **Símbolo**.
 3. Ingresá el símbolo y hacé clic en **Buscar** (o presioná Enter).
-4. Se muestran el **código** interno, el **detalle** del artículo y su **marca**. Hacé clic en el código para copiarlo.
+4. Se muestran el **código** interno, el **detalle** del artículo, su **marca** y, en letra más chica, el código alternativo, la característica, la cantidad por bulto y el tipo de reposición. Hacé clic en el código para copiarlo.
 5. Si querés hacer otra consulta con el mismo cliente, usá **Limpiar resultado** para borrar el símbolo y el código.
 
 ### Búsqueda avanzada
@@ -73,7 +73,7 @@ El logo se toma del archivo `LOGO AltF2.png` en la misma carpeta. Si no existe, 
 
 ## Estado
 
-Versión 0.4.1 (prototipo). Solo lectura: las altas de vínculos símbolo ↔ código están previstas para una versión posterior, con almacenamiento escribible.
+Versión 0.5.0 (prototipo). Solo lectura: las altas de vínculos símbolo ↔ código están previstas para una versión posterior, con almacenamiento escribible.
 
 Ver [HISTORIAL.md](HISTORIAL.md) para el registro de cambios versión por versión, y [CHANGELOG.md](CHANGELOG.md) para el detalle técnico.
 

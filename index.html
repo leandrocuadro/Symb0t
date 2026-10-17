@@ -181,8 +181,14 @@
   .res-fila { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
   .res-col-detalle { flex: 1 1 280px; min-width: 0; }
   .res-detalle { font-size: 16px; font-weight: 600; margin-top: 4px; line-height: 1.4; }
-  .res-marca { font-size: 14px; font-weight: 600; color: var(--muted); margin-top: 8px; }
-  .res-marca .res-label { display: inline-block; margin-right: 6px; }
+  .res-marca-principal { font-size: 18px; font-weight: 700; color: var(--text-main); margin-top: 10px; line-height: 1.3; }
+  .res-marca-principal .res-label { font-size: 11px; font-weight: 700; color: var(--light); letter-spacing: .5px; margin-right: 10px; vertical-align: middle; }
+  .res-menores {
+    display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; padding-top: 10px;
+    border-top: 1px dashed var(--border-light);
+  }
+  .res-dato { font-size: 12px; font-weight: 500; color: var(--muted); }
+  .res-dato .res-label { font-size: 10px; margin-right: 4px; }
   .res-sin { font-size: 13px; color: var(--light); font-style: italic; margin-top: 6px; }
   .advertencia {
     margin-top: 10px; font-size: 13px; color: #92400e;
@@ -438,21 +444,24 @@
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const filas = parsearCSV(decodificar(await res.arrayBuffer()));
         const cab = filas[0].map(normalizar);
-        const iC = cab.indexOf('codigo'), iN = cab.indexOf('nombre'), iM = cab.indexOf('marca');
+        const iC = cab.indexOf('codigo'), iN = cab.indexOf('nombre');
         if (iC < 0 || iN < 0) throw new Error('El archivo de productos no tiene las columnas Código y Nombre');
-        const mapa = new Map();   // código -> { nombre, marca, repetido }
+        const iM = cab.indexOf('marca'), iAlt = cab.indexOf('codigo alternativo');
+        const iCar = cab.indexOf('caracteristica'), iRep = cab.indexOf('tipo de reposicion');
+        const iBul = cab.indexOf('cantidad por bulto');
+        const valor = (f, i) => (i >= 0 ? (f[i] || '').replace(/\s+/g, ' ').trim() : '');
+        const mapa = new Map();   // código -> { nombre, marca, alt, caracteristica, reposicion, bulto, repetido }
         for (const f of filas.slice(1)) {
           const cod = (f[iC] || '').trim();
-          const nom = (f[iN] || '').replace(/\s+/g, ' ').trim();
-          const marca = iM >= 0 ? (f[iM] || '').replace(/\s+/g, ' ').trim() : '';
           if (!cod) continue;
+          const datos = {
+            nombre: valor(f, iN), marca: valor(f, iM), alt: valor(f, iAlt),
+            caracteristica: valor(f, iCar), reposicion: valor(f, iRep), bulto: valor(f, iBul)
+          };
           const previo = mapa.get(cod);
-          if (!previo) mapa.set(cod, { nombre: nom, marca, repetido: false });
-          else {
-            if (!previo.nombre && nom) previo.nombre = nom;
-            if (!previo.marca && marca) previo.marca = marca;
-            if (nom && previo.nombre !== nom) previo.repetido = true;   // se respeta el primero
-          }
+          if (!previo) { mapa.set(cod, { ...datos, repetido: false }); continue; }
+          for (const k of Object.keys(datos)) if (!previo[k] && datos[k]) previo[k] = datos[k];
+          if (datos.nombre && previo.nombre !== datos.nombre) previo.repetido = true;   // se respeta el primero
         }
         return mapa;
       })().catch(err => { productosPromesa = null; throw err; });
@@ -463,7 +472,7 @@
   async function buscarProducto(cod) {
     try {
       const p = (await cargarProductos()).get(cod);
-      return { ok: true, nombre: p ? p.nombre : '', marca: p ? p.marca : '', repetido: p ? p.repetido : false };
+      return { ok: true, ...(p || { nombre: '', marca: '', alt: '', caracteristica: '', reposicion: '', bulto: '', repetido: false }) };
     } catch (err) {
       console.error(err);
       return { ok: false };
@@ -691,8 +700,19 @@
     } else if (!producto.nombre) {
       detalle = '<div class="res-sin">Este código no figura en la base de productos.</div>';
     } else {
+      // Orden por relevancia: detalle (grande), marca (destacada) y datos menores (chicos)
+      const dato = (etiqueta, valor) => valor
+        ? `<span class="res-dato"><span class="res-label">${etiqueta}</span> ${esc(valor)}</span>`
+        : '';
+      const menores = [
+        dato('CÓD. ALT.', producto.alt),
+        dato('CARACTERÍSTICA', producto.caracteristica),
+        dato('CANT. POR BULTO', producto.bulto),
+        dato('TIPO DE REPOSICIÓN', producto.reposicion)
+      ].join('');
       detalle = `<div class="res-detalle">${esc(producto.nombre)}</div>` +
-        (producto.marca ? `<div class="res-marca"><span class="res-label">MARCA</span> ${esc(producto.marca)}</div>` : '');
+        (producto.marca ? `<div class="res-marca-principal"><span class="res-label">MARCA</span>${esc(producto.marca)}</div>` : '') +
+        (menores ? `<div class="res-menores">${menores}</div>` : '');
       if (producto.repetido) {
         avisos.push(`El código ${cod} aparece en la base de productos con nombres distintos. Se muestra el primero.`);
       }
