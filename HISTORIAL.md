@@ -6,6 +6,16 @@ Cada subida a GitHub agrega una entrada nueva con el número de versión, el tí
 
 ---
 
+## v0.4.1 — Sugerencias de campos en formato de oración
+
+**Fecha:** 2026-10-17 · **Commit:** ver `git log` (subida siguiente)
+
+### Cambiado
+- Sugerencias de los campos vacíos en formato de oración, sin "Ej:": "Ingresá el nro de cliente", "Ingresá el símbolo del cliente" e "Ingresá parte del nombre del cliente".
+- Las sugerencias usan la misma tipografía que el texto de ayuda ("Ingresá un cliente válido para habilitar la carga.").
+
+---
+
 ## v0.4.0 — Marca del artículo y botón Limpiar resultado
 
 **Fecha:** 2026-10-17 · **Commit:** `64f79b8`

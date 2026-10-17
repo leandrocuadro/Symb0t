@@ -106,6 +106,8 @@
   .campo input.mono { font-family: var(--mono); }
   .campo input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.2); }
   .campo input:disabled { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
+  /* Sugerencias de campos vacíos: mismo formato que el texto de ayuda (.ayuda) */
+  .campo input::placeholder { font-family: var(--sans); font-style: italic; font-size: 12.5px; font-weight: 500; color: var(--light); opacity: 1; }
   .campo-nombre { flex: 1 1 340px; position: relative; }
   .campo-nombre input { width: 100%; }
   .sugerencias {
@@ -228,11 +230,11 @@
     <div class="fila">
       <div class="campo">
         <label for="nroStd">Nro. de cliente</label>
-        <input id="nroStd" inputmode="numeric" autocomplete="off" placeholder="Ej: 22434">
+        <input id="nroStd" inputmode="numeric" autocomplete="off" placeholder="Ingresá el nro de cliente">
       </div>
       <div class="campo campo-nombre">
         <label for="buscaStd">Nombre de cliente</label>
-        <input id="buscaStd" autocomplete="off" placeholder="Escribí parte del nombre">
+        <input id="buscaStd" autocomplete="off" placeholder="Ingresá parte del nombre del cliente">
         <ul class="sugerencias" id="sugStd" role="listbox" hidden></ul>
       </div>
     </div>
@@ -240,7 +242,7 @@
     <div class="fila">
       <div class="campo">
         <label for="simStd">Símbolo</label>
-        <input id="simStd" class="mono" autocomplete="off" placeholder="Ej: 40050104003" disabled>
+        <input id="simStd" class="mono" autocomplete="off" placeholder="Ingresá el símbolo del cliente" disabled>
       </div>
       <button class="btn btn-primario" id="btnStd" disabled>🔍 Buscar</button>
       <button class="btn btn-limpiar" id="btnLimpiarStd" type="button">🧹 Limpiar resultado</button>
@@ -256,11 +258,11 @@
     <div class="fila">
       <div class="campo">
         <label for="nroAdv">Nro. de cliente</label>
-        <input id="nroAdv" inputmode="numeric" autocomplete="off" placeholder="Ej: 22434">
+        <input id="nroAdv" inputmode="numeric" autocomplete="off" placeholder="Ingresá el nro de cliente">
       </div>
       <div class="campo campo-nombre">
         <label for="buscaAdv">Nombre de cliente</label>
-        <input id="buscaAdv" autocomplete="off" placeholder="Escribí parte del nombre">
+        <input id="buscaAdv" autocomplete="off" placeholder="Ingresá parte del nombre del cliente">
         <ul class="sugerencias" id="sugAdv" role="listbox" hidden></ul>
       </div>
     </div>

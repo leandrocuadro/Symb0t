@@ -73,7 +73,7 @@ El logo se toma del archivo `LOGO AltF2.png` en la misma carpeta. Si no existe, 
 
 ## Estado
 
-Versión 0.4.0 (prototipo). Solo lectura: las altas de vínculos símbolo ↔ código están previstas para una versión posterior, con almacenamiento escribible.
+Versión 0.4.1 (prototipo). Solo lectura: las altas de vínculos símbolo ↔ código están previstas para una versión posterior, con almacenamiento escribible.
 
 Ver [HISTORIAL.md](HISTORIAL.md) para el registro de cambios versión por versión, y [CHANGELOG.md](CHANGELOG.md) para el detalle técnico.
 

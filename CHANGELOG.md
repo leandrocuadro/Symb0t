@@ -4,6 +4,11 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 
 Para el registro resumido por versión, ver [HISTORIAL.md](HISTORIAL.md).
 
+## [0.4.1] - 2026-10-17
+
+### Cambiado
+- Sugerencias de los campos vacíos en formato de oración, sin "Ej:": "Ingresá el nro de cliente", "Ingresá el símbolo del cliente" e "Ingresá parte del nombre del cliente". Usan la misma tipografía que el texto de ayuda.
+
 ## [0.4.0] - 2026-10-17
 
 ### Agregado
