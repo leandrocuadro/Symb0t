@@ -2,6 +2,8 @@
 
 Todos los cambios notables de este proyecto se documentan en este archivo.
 
+Para el registro resumido por versión, ver [HISTORIAL.md](HISTORIAL.md).
+
 ## [0.4.0] - 2026-10-17
 
 ### Agregado
