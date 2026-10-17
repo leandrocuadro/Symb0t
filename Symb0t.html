@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Symb0t | Búsqueda de códigos por símbolo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #d1d5db;
+    --card: #ffffff;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #eff6ff;
+    --primary-border: #bfdbfe;
+    --border: #9ca3af;
+    --border-light: #e2e8f0;
+    --text: #1f2937;
+    --muted: #4b5563;
+    --light: #6b7280;
+    --red: #b91c1c;
+    --red-light: #fef2f2;
+    --red-border: #fecaca;
+    --thead: #1e293b;
+    --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  [hidden] { display: none !important; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Barra superior */
+  .topbar {
+    background: #1f2937;
+    color: #fff;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    border-bottom: 1px solid #111827;
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+  }
+  .marca { display: flex; align-items: center; gap: 14px; }
+  .logo-caja {
+    background: #fff;
+    border-radius: 8px;
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    height: 56px;
+  }
+  .logo-caja img { height: 40px; width: auto; display: block; }
+  .logo-texto { font-weight: 700; color: #1f2937; font-size: 18px; }
+  .marca-texto { border-left: 1px solid #374151; padding-left: 14px; }
+  .marca-nombre { font-size: 20px; font-weight: 700; letter-spacing: .3px; }
+  .marca-sub { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+  .pill {
+    font-size: 13px; font-weight: 600;
+    padding: 8px 16px; border-radius: 9999px;
+    border: 1px solid #d1d5db; background: #fff; color: #1d4ed8;
+    box-shadow: 0 1px 2px rgba(0,0,0,.05);
+  }
+  .pill.ok { background: #f0fdf4; color: #15803d; border-color: #86efac; }
+  .pill.error { background: var(--red-light); color: var(--red); border-color: var(--red-border); }
+
+  /* Contenido */
+  .contenedor {
+    max-width: 1000px; width: 100%; margin: 28px auto; padding: 0 16px;
+    display: flex; flex-direction: column; gap: 22px;
+  }
+  .tarjeta {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.1);
+    padding: 22px 24px;
+    position: relative;
+  }
+  .tarjeta::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--primary); border-radius: 8px 8px 0 0;
+  }
+  .titulo-seccion { font-size: 15px; font-weight: 700; margin-bottom: 16px; letter-spacing: .2px; }
+  .separador-doble { border-top: 3px double var(--border); margin: 4px 0; }
+
+  .fila { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+  .fila-fin { justify-content: flex-end; margin: 14px 0 0; }
+  .campo { display: flex; flex-direction: column; gap: 5px; flex: 0 1 280px; min-width: 220px; }
+  .campo label { font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: .5px; }
+  .campo input {
+    padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px;
+    font: 500 14px var(--sans); color: var(--text); outline: none; background: #fff;
+  }
+  .campo input.mono { font-family: var(--mono); }
+  .campo input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.2); }
+  .campo input:disabled { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
+  .nombre {
+    font-size: 16px; font-weight: 700; padding: 9px 14px;
+    background: var(--primary-light); border: 1px solid var(--primary-border); border-radius: 6px;
+    align-self: flex-end;
+  }
+  .ayuda { font-size: 12.5px; color: var(--light); font-style: italic; align-self: center; }
+
+  .aviso {
+    font-size: 13px; font-weight: 600; padding: 9px 12px; border-radius: 6px;
+    margin-bottom: 14px; border: 1px solid transparent;
+  }
+  .aviso.error { background: var(--red-light); color: var(--red); border-color: var(--red-border); }
+  .aviso.info { background: var(--primary-light); color: #1d4ed8; border-color: var(--primary-border); }
+
+  .btn {
+    padding: 9px 18px; border-radius: 6px; font: 600 13.5px var(--sans);
+    cursor: pointer; border: 1px solid transparent;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .btn:disabled, .btn.deshabilitado { opacity: .5; cursor: not-allowed; pointer-events: none; }
+  .btn-primario { background: var(--primary); color: #fff; }
+  .btn-primario:hover:not(:disabled) { background: var(--primary-hover); }
+  .btn-excel { background: #107c41; color: #fff; }
+  .btn-excel:hover:not(:disabled) { background: #0b5a2f; }
+
+  .resultado {
+    margin-top: 6px; padding: 16px 18px;
+    border: 1px solid var(--border-light); border-radius: 6px; background: #f8fafc;
+  }
+  .res-label { font-size: 11px; font-weight: 700; color: var(--light); letter-spacing: .5px; }
+  .res-codigo { font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--primary); margin-top: 4px; }
+  .res-error { color: var(--red); font-weight: 600; font-size: 14px; }
+  .advertencia {
+    margin-top: 10px; font-size: 13px; color: #92400e;
+    background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 8px 12px;
+  }
+
+  .resumen { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 10px; display: flex; gap: 18px; flex-wrap: wrap; }
+  .tabla-wrap { border: 1px solid var(--border); border-radius: 6px; overflow: auto; max-height: 520px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th {
+    background: var(--thead); color: #f8fafc; text-align: left;
+    padding: 10px 14px; font-size: 12px; letter-spacing: .5px;
+    position: sticky; top: 0;
+  }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--border-light); }
+  tr:nth-child(even) td { background: #f8fafc; }
+  .mono { font-family: var(--mono); font-size: 12.5px; }
+  .cero { color: var(--red); font-weight: 700; }
+  .vacio { text-align: center; color: var(--light); padding: 30px; }
+
+  .pie { text-align: center; font-size: 12px; color: var(--muted); padding: 18px; margin-top: auto; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="marca">
+    <div class="logo-caja">
+      <img src="LOGO AltF2.png" alt="AltF2"
+           onerror="this.outerHTML='<span class=&quot;logo-texto&quot;>AltF2</span>'">
+    </div>
+    <div class="marca-texto">
+      <div class="marca-nombre">Symb0t</div>
+      <div class="marca-sub">Búsqueda de códigos por símbolo de cliente</div>
+    </div>
+  </div>
+  <div id="estadoCatalogo" class="pill">⏳ Cargando base de clientes...</div>
+</header>
+
+<main class="contenedor">
+
+  <!-- Búsqueda estándar -->
+  <section class="tarjeta" id="secStd">
+    <h2 class="titulo-seccion">Búsqueda estándar</h2>
+    <div class="fila">
+      <div class="campo">
+        <label for="nroStd">Nro. de cliente</label>
+        <input id="nroStd" inputmode="numeric" autocomplete="off" placeholder="Ej: 22434">
+      </div>
+      <div class="nombre" id="nombreStd" hidden></div>
+    </div>
+    <p class="aviso error" id="avisoStd" hidden></p>
+    <div class="fila">
+      <div class="campo">
+        <label for="simStd">Símbolo</label>
+        <input id="simStd" class="mono" autocomplete="off" placeholder="Ej: 40050104003" disabled>
+      </div>
+      <button class="btn btn-primario" id="btnStd" disabled>🔍 Buscar</button>
+    </div>
+    <div class="resultado" id="resStd" hidden></div>
+  </section>
+
+  <div class="separador-doble"></div>
+
+  <!-- Búsqueda avanzada -->
+  <section class="tarjeta" id="secAdv">
+    <h2 class="titulo-seccion">Búsqueda avanzada</h2>
+    <div class="fila">
+      <div class="campo">
+        <label for="nroAdv">Nro. de cliente</label>
+        <input id="nroAdv" inputmode="numeric" autocomplete="off" placeholder="Ej: 22434">
+      </div>
+      <div class="nombre" id="nombreAdv" hidden></div>
+    </div>
+    <p class="aviso error" id="avisoAdv" hidden></p>
+    <div class="fila">
+      <label class="btn btn-primario deshabilitado" id="lblArchivo">
+        📂 Cargar Excel
+        <input type="file" id="archivoAdv" accept=".xlsx,.xls,.csv" disabled hidden>
+      </label>
+      <span class="ayuda" id="ayudaArchivo">Ingresá un cliente válido para habilitar la carga.</span>
+    </div>
+    <div class="resumen" id="resumenAdv" hidden></div>
+    <div id="advertenciasAdv"></div>
+    <div class="tabla-wrap">
+      <table>
+        <thead>
+          <tr><th>NRO ITEM</th><th>SIMBOLO</th><th>CODIGO</th></tr>
+        </thead>
+        <tbody id="tbodyAdv">
+          <tr><td colspan="3" class="vacio">Sin resultados.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="fila fila-fin">
+      <button class="btn btn-excel" id="btnExport" disabled>📊 Exportar a Excel</button>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pie">Symb0t · Diseño AltF2</footer>
+
+<script>
+  // ---------- Fuentes de datos (GitHub) ----------
+  const URL_CLIENTES = 'https://raw.githubusercontent.com/leandrocuadro/clientesegu/refs/heads/main/clientes.csv';
+  const URL_BASE = clave => `https://raw.githubusercontent.com/leandrocuadro/SIMBOLOS/refs/heads/main/${encodeURIComponent(clave)}.csv`;
+
+  const MENSAJES = {
+    inexistente: 'El nro de cliente no existe en la base de clientes.',
+    sin_base: 'El cliente no tiene base de símbolos cargada.',
+    sin_catalogo: 'La base de clientes todavía no cargó. Intentá de nuevo en unos segundos.'
+  };
+
+  const clientes = new Map();   // clave -> nombre
+  const bases = new Map();      // clave -> { simbolos, codigos, repetidos } | null
+  const estado = { std: null, adv: null };   // resultado de validar el cliente
+  const seq = { std: 0, adv: 0 };            // descarta respuestas viejas
+  let resultadosAdv = [];
+
+  const $ = id => document.getElementById(id);
+  const SEC = {
+    std: { nro: $('nroStd'), nombre: $('nombreStd'), aviso: $('avisoStd') },
+    adv: { nro: $('nroAdv'), nombre: $('nombreAdv'), aviso: $('avisoAdv') }
+  };
+
+  // ---------- Utilidades ----------
+  const normalizar = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  // Quita espacios y ceros a la izquierda: " 0022434" -> "22434"
+  const claveCliente = s => String(s ?? '').replace(/\s+/g, '').replace(/^0+(?=\d)/, '');
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  // Algunos CSV vienen en Windows-1252 (Ñ y tildes): probamos UTF-8 y, si falla, Windows-1252
+  function decodificar(buffer) {
+    try { return new TextDecoder('utf-8', { fatal: true }).decode(buffer); }
+    catch (e) { return new TextDecoder('windows-1252').decode(buffer); }
+  }
+
+  // Parser CSV con separador ";", comillas y BOM
+  function parsearCSV(texto) {
+    texto = texto.replace(/^﻿/, '');
+    const filas = [];
+    let fila = [], celda = '', entreComillas = false;
+    for (let i = 0; i < texto.length; i++) {
+      const c = texto[i];
+      if (entreComillas) {
+        if (c === '"') {
+          if (texto[i + 1] === '"') { celda += '"'; i++; } else entreComillas = false;
+        } else celda += c;
+      } else if (c === '"') {
+        entreComillas = true;
+      } else if (c === ';') {
+        fila.push(celda); celda = '';
+      } else if (c === '\n' || c === '\r') {
+        if (c === '\r' && texto[i + 1] === '\n') i++;
+        fila.push(celda); filas.push(fila); fila = []; celda = '';
+      } else celda += c;
+    }
+    if (celda !== '' || fila.length) { fila.push(celda); filas.push(fila); }
+    return filas
+      .map(f => f.map(v => v.trim()))
+      .filter(f => f.some(v => v !== ''));
+  }
+
+  // ---------- Carga de datos ----------
+  async function cargarClientes() {
+    const est = $('estadoCatalogo');
+    try {
+      const res = await fetch(URL_CLIENTES);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const filas = parsearCSV(decodificar(await res.arrayBuffer()));
+      const cab = filas[0].map(normalizar);
+      const iC = cab.indexOf('codigo'), iN = cab.indexOf('nombre');
+      if (iC < 0 || iN < 0) throw new Error('El archivo de clientes no tiene las columnas codigo y nombre');
+      for (const f of filas.slice(1)) {
+        const clave = claveCliente(f[iC]);
+        const nombre = (f[iN] || '').replace(/\s+/g, ' ').trim();
+        // Entradas de baja o de prueba, marcadas "NO USAR" en la base
+        if (!clave || !nombre || /no usar/i.test(nombre)) continue;
+        clientes.set(clave, nombre);
+      }
+      est.textContent = `✅ ${clientes.size.toLocaleString('es-AR')} clientes disponibles`;
+      est.className = 'pill ok';
+    } catch (e) {
+      console.error(e);
+      est.textContent = '❌ No se pudo cargar la base de clientes. Verificá tu conexión.';
+      est.className = 'pill error';
+    }
+  }
+
+  // Carga la base SIMBOLOS/<nro>.csv del cliente. Devuelve null si no existe.
+  async function cargarBase(clave) {
+    if (bases.has(clave)) return bases.get(clave);
+    let res;
+    try { res = await fetch(URL_BASE(clave)); }
+    catch (e) { return null; }                 // sin conexión: no se cachea
+    if (!res.ok) { bases.set(clave, null); return null; }
+
+    const filas = parsearCSV(decodificar(await res.arrayBuffer()));
+    const cab = filas.length ? filas[0].map(normalizar) : [];
+    const hayEncabezado = cab.includes('simbolo') && cab.includes('codigo');
+    const iS = hayEncabezado ? cab.indexOf('simbolo') : 0;
+    const iC = hayEncabezado ? cab.indexOf('codigo') : 1;
+
+    const simbolos = new Map();   // símbolo -> código
+    const codigos = new Map();    // código -> Set de símbolos (para advertir)
+    const repetidos = new Set();  // símbolos repetidos con códigos distintos
+    for (const f of filas.slice(hayEncabezado ? 1 : 0)) {
+      const s = (f[iS] || '').trim();
+      const c = (f[iC] || '').trim();
+      if (!s) continue;
+      if (simbolos.has(s)) {
+        if (simbolos.get(s) !== c) repetidos.add(s);   // se respeta el primero
+        continue;
+      }
+      simbolos.set(s, c);
+      if (c) {
+        if (!codigos.has(c)) codigos.set(c, new Set());
+        codigos.get(c).add(s);
+      }
+    }
+    const base = { simbolos, codigos, repetidos };
+    bases.set(clave, base);
+    return base;
+  }
+
+  // ---------- Validación del cliente (orden: clientes.csv, luego SIMBOLOS) ----------
+  async function evaluarCliente(clave) {
+    if (!clave) return { estado: 'vacio' };
+    if (!clientes.size) return { estado: 'sin_catalogo' };
+    if (!clientes.has(clave)) return { estado: 'inexistente' };
+    const base = await cargarBase(clave);
+    if (!base) return { estado: 'sin_base' };
+    return { estado: 'ok', clave, nombre: clientes.get(clave), base };
+  }
+
+  function habilitarControles(sec) {
+    const ok = !!estado[sec];
+    if (sec === 'std') {
+      $('simStd').disabled = !ok;
+      $('btnStd').disabled = !ok;
+      if (!ok) $('simStd').value = '';
+    } else {
+      $('archivoAdv').disabled = !ok;
+      $('lblArchivo').classList.toggle('deshabilitado', !ok);
+      $('ayudaArchivo').textContent = ok
+        ? 'Subí un Excel o CSV con una sola columna de símbolos. La primera fila es el encabezado.'
+        : 'Ingresá un cliente válido para habilitar la carga.';
+    }
+  }
+
+  function limpiarResultado(sec) {
+    if (sec === 'std') {
+      $('resStd').hidden = true;
+      $('resStd').innerHTML = '';
+    } else {
+      resultadosAdv = [];
+      renderAdv();
+      $('resumenAdv').hidden = true;
+      $('advertenciasAdv').innerHTML = '';
+      $('archivoAdv').value = '';
+      $('btnExport').disabled = true;
+    }
+  }
+
+  // Al cambiar el nro se descarta todo lo anterior
+  function reiniciarCliente(sec) {
+    seq[sec]++;
+    estado[sec] = null;
+    SEC[sec].nombre.hidden = true;
+    SEC[sec].aviso.hidden = true;
+    habilitarControles(sec);
+    limpiarResultado(sec);
+  }
+
+  async function actualizarCliente(sec) {
+    const id = ++seq[sec];
+    const S = SEC[sec];
+    const clave = claveCliente(S.nro.value);
+    if (clave && clientes.has(clave)) {
+      S.aviso.className = 'aviso info';
+      S.aviso.textContent = 'Verificando base de símbolos...';
+      S.aviso.hidden = false;
+    }
+    const r = await evaluarCliente(clave);
+    if (id !== seq[sec]) return;                 // llegó una respuesta vieja
+
+    estado[sec] = r.estado === 'ok' ? r : null;
+    S.nombre.textContent = r.estado === 'ok' ? r.nombre : '';
+    S.nombre.hidden = r.estado !== 'ok';
+    const msg = MENSAJES[r.estado] || '';
+    S.aviso.className = 'aviso error';
+    S.aviso.textContent = msg;
+    S.aviso.hidden = !msg;
+    habilitarControles(sec);
+  }
+
+  for (const sec of ['std', 'adv']) {
+    const nro = SEC[sec].nro;
+    nro.addEventListener('input', () => {
+      nro.value = nro.value.replace(/\D/g, '');
+      reiniciarCliente(sec);
+    });
+    nro.addEventListener('change', () => actualizarCliente(sec));
+    nro.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); actualizarCliente(sec); }
+    });
+  }
+
+  // ---------- Búsqueda estándar ----------
+  function buscarStd() {
+    const e = estado.std;
+    const sim = $('simStd').value.trim();
+    if (!e || !sim) return;
+    const out = $('resStd');
+    const cod = e.base.simbolos.get(sim);
+
+    if (cod === undefined) {
+      out.innerHTML = '<div class="res-error">Símbolo no encontrado en la base de este cliente.</div>';
+      out.hidden = false;
+      return;
+    }
+    if (!cod) {
+      out.innerHTML = '<div class="res-error">El símbolo existe en la base, pero no tiene código asignado.</div>';
+      out.hidden = false;
+      return;
+    }
+
+    const avisos = [];
+    if (e.base.repetidos.has(sim)) {
+      avisos.push('Este símbolo aparece repetido en la base con códigos distintos. Se muestra el primero. Revisá la base.');
+    }
+    const otros = [...(e.base.codigos.get(cod) || [])].filter(s => s !== sim);
+    if (otros.length) {
+      avisos.push(`El código ${cod} también está asociado a los símbolos: ${otros.join(', ')}. Revisá la base antes de usarlo.`);
+    }
+
+    out.innerHTML =
+      '<div class="res-label">CÓDIGO</div>' +
+      `<div class="res-codigo">${esc(cod)}</div>` +
+      avisos.map(a => `<div class="advertencia">⚠️ ${esc(a)}</div>`).join('');
+    out.hidden = false;
+  }
+
+  $('btnStd').addEventListener('click', buscarStd);
+  $('simStd').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); buscarStd(); } });
+  $('simStd').addEventListener('input', () => { $('resStd').hidden = true; });
+
+  // ---------- Búsqueda avanzada ----------
+  function renderAdv() {
+    const tbody = $('tbodyAdv');
+    if (!resultadosAdv.length) {
+      tbody.innerHTML = '<tr><td colspan="3" class="vacio">Sin resultados.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = resultadosAdv.map(r =>
+      `<tr>
+        <td class="mono">${r.item}</td>
+        <td class="mono">${esc(r.simbolo)}</td>
+        <td class="mono ${r.codigo === '0' ? 'cero' : ''}">${esc(r.codigo)}</td>
+      </tr>`
+    ).join('');
+  }
+
+  function mostrarResumenAdv() {
+    const e = estado.adv;
+    const total = resultadosAdv.length;
+    const encontrados = resultadosAdv.filter(r => r.codigo !== '0').length;
+    const resumen = $('resumenAdv');
+    resumen.innerHTML =
+      `<span>Total: ${total}</span><span>Encontrados: ${encontrados}</span><span>No encontrados (código 0): ${total - encontrados}</span>`;
+    resumen.hidden = false;
+
+    // Advertencias (sin modificar datos)
+    const avisos = [];
+    const codigosCompartidos = new Set();
+    const simbolosRepetidos = new Set();
+    for (const r of resultadosAdv) {
+      if (r.codigo !== '0' && (e.base.codigos.get(r.codigo)?.size || 0) > 1) codigosCompartidos.add(r.codigo);
+      if (e.base.repetidos.has(r.simbolo)) simbolosRepetidos.add(r.simbolo);
+    }
+    if (codigosCompartidos.size) {
+      avisos.push(`${codigosCompartidos.size} código(s) están asociados a más de un símbolo en la base: ${[...codigosCompartidos].join(', ')}. Se muestran tal como están en la base.`);
+    }
+    if (simbolosRepetidos.size) {
+      avisos.push(`${simbolosRepetidos.size} símbolo(s) aparecen repetidos en la base con códigos distintos: ${[...simbolosRepetidos].join(', ')}. Se muestra el primero.`);
+    }
+    $('advertenciasAdv').innerHTML = avisos.map(a => `<div class="advertencia">⚠️ ${esc(a)}</div>`).join('');
+  }
+
+  $('archivoAdv').addEventListener('change', async ev => {
+    const file = ev.target.files[0];
+    const e = estado.adv;
+    if (!file || !e) return;
+    try {
+      if (typeof XLSX === 'undefined') throw new Error('No se pudo cargar la librería de Excel. Revisá tu conexión.');
+      const libro = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+      const hoja = libro.Sheets[libro.SheetNames[0]];
+      const filas = XLSX.utils.sheet_to_json(hoja, { header: 1, defval: '', raw: false });
+
+      // Fila 1 = encabezado. La fila 2 es el item 1, la fila 3 el item 2, etc.
+      let fin = filas.length - 1;
+      while (fin >= 1 && String((filas[fin] || [])[0] ?? '').trim() === '') fin--;
+      if (fin < 1) throw new Error('El archivo no tiene símbolos a buscar (la primera fila es el encabezado).');
+
+      const res = [];
+      for (let r = 1; r <= fin; r++) {
+        const simbolo = String((filas[r] || [])[0] ?? '').trim();
+        const codigo = simbolo ? (e.base.simbolos.get(simbolo) || '0') : '0';
+        res.push({ item: r, simbolo, codigo });
+      }
+      resultadosAdv = res;
+      renderAdv();
+      mostrarResumenAdv();
+      $('btnExport').disabled = false;
+    } catch (err) {
+      resultadosAdv = [];
+      renderAdv();
+      $('resumenAdv').hidden = true;
+      $('advertenciasAdv').innerHTML = '';
+      $('btnExport').disabled = true;
+      SEC.adv.aviso.className = 'aviso error';
+      SEC.adv.aviso.textContent = err.message || 'No se pudo leer el archivo.';
+      SEC.adv.aviso.hidden = false;
+    } finally {
+      ev.target.value = '';
+    }
+  });
+
+  $('btnExport').addEventListener('click', () => {
+    if (!resultadosAdv.length || !estado.adv) return;
+    const datos = resultadosAdv.map(r => ({ 'NRO ITEM': r.item, 'SIMBOLO': r.simbolo, 'CODIGO': r.codigo }));
+    const hoja = XLSX.utils.json_to_sheet(datos, { header: ['NRO ITEM', 'SIMBOLO', 'CODIGO'] });
+    hoja['!cols'] = [{ wch: 10 }, { wch: 18 }, { wch: 14 }];
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Resultados');
+    const fecha = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(libro, `Symb0t_${estado.adv.clave}_${fecha}.xlsx`);
+  });
+
+  cargarClientes();
+</script>
+</body>
+</html>
