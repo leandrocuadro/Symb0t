@@ -492,15 +492,32 @@
     habilitarControles(sec);
   }
 
+  // El nro de cliente es único para ambas búsquedas: lo que se ingresa en una se replica en la otra.
+  const otra = sec => (sec === 'std' ? 'adv' : 'std');
+
+  // Copia el nro a la otra búsqueda y descarta su consulta anterior (sin validar todavía)
+  function propagarNro(origen, valor) {
+    const destino = otra(origen);
+    SEC[destino].nro.value = valor;
+    reiniciarCliente(destino);
+  }
+
+  // Valida el cliente en ambas búsquedas
+  function validarAmbas(origen) {
+    actualizarCliente(origen);
+    actualizarCliente(otra(origen));
+  }
+
   for (const sec of ['std', 'adv']) {
     const nro = SEC[sec].nro;
     nro.addEventListener('input', () => {
       nro.value = nro.value.replace(/\D/g, '');
       reiniciarCliente(sec);
+      propagarNro(sec, nro.value);
     });
-    nro.addEventListener('change', () => actualizarCliente(sec));
+    nro.addEventListener('change', () => validarAmbas(sec));
     nro.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { e.preventDefault(); actualizarCliente(sec); }
+      if (e.key === 'Enter') { e.preventDefault(); validarAmbas(sec); }
     });
   }
 
@@ -522,7 +539,8 @@
       cerrar();
       S.nro.value = clave;
       reiniciarCliente(sec);
-      actualizarCliente(sec);
+      propagarNro(sec, clave);
+      validarAmbas(sec);
     };
 
     input.addEventListener('focus', () => input.select());
