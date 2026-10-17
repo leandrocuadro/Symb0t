@@ -2,6 +2,18 @@
 
 Todos los cambios notables de este proyecto se documentan en este archivo.
 
+## [0.3.0] - 2026-10-17
+
+### Agregado
+- Clic en un código para copiarlo, en ambas búsquedas. El código muestra "¡Copiado!" en verde durante 1,2 segundos. Si el navegador no permite copiar, aparece un aviso.
+- Negrita en el texto buscado dentro de las sugerencias del autocompletado de nombre de cliente.
+
+### Cambiado
+- Advertencias de la búsqueda avanzada en un bloque plegable, con el conteo visible.
+- El botón Exportar a Excel se movió encima de la tabla.
+- Anchos de columna fijos en la tabla de la búsqueda avanzada (DETALLE ocupa el espacio restante).
+- El código del resultado de la búsqueda estándar tiene el mismo estilo que en el buscador de productos internos.
+
 ## [0.2.0] - 2026-10-17
 
 ### Agregado

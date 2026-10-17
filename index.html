@@ -96,7 +96,7 @@
   .separador-doble { border-top: 3px double var(--border); margin: 4px 0; }
 
   .fila { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
-  .fila-fin { justify-content: flex-end; margin: 14px 0 0; }
+  .fila-fin { justify-content: flex-end; margin: 0 0 12px; }
   .campo { display: flex; flex-direction: column; gap: 5px; flex: 0 1 280px; min-width: 220px; }
   .campo label { font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: .5px; }
   .campo input {
@@ -144,8 +144,36 @@
     border: 1px solid var(--border-light); border-radius: 6px; background: #f8fafc;
   }
   .res-label { font-size: 11px; font-weight: 700; color: var(--light); letter-spacing: .5px; }
-  .res-codigo { font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--primary); margin-top: 4px; }
+  /* Código copiable (mismo estilo que la app de referencia) */
+  .code-badge {
+    font-family: var(--mono); font-size: 12.5px; font-weight: 600; color: var(--primary);
+    background-color: #f1f5f9; padding: 3px 8px; border-radius: 4px; border: 1px solid #cbd5e1;
+    cursor: pointer; user-select: none; transition: all 0.15s ease;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .code-badge::after { content: '📋'; font-size: 10px; opacity: 0.5; transition: opacity 0.15s ease; }
+  .code-badge:hover { background-color: #e2e8f0; border-color: var(--primary); color: var(--primary-hover); }
+  .code-badge:hover::after { opacity: 1; }
+  .code-badge.copied { background-color: #dcfce7 !important; color: #15803d !important; border-color: #86efac !important; }
+  .code-badge.copied::after { content: '✓'; opacity: 1; }
+  .code-badge.cero { color: var(--red); }
+  .code-badge.grande { font-size: 24px; padding: 8px 14px; border-radius: 8px; gap: 8px; }
+  .code-badge.grande::after { font-size: 16px; }
+  .avisos { margin-bottom: 12px; }
+  .avisos summary {
+    cursor: pointer; font-size: 13px; font-weight: 600; color: #92400e;
+    background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 8px 12px;
+  }
+  .avisos .advertencia { margin-top: 8px; }
+  .sugerencias li strong { color: var(--primary); font-weight: 700; }
   .res-error { color: var(--red); font-weight: 600; font-size: 14px; }
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+    background: #1f2937; color: #fff; font: 600 13px var(--sans);
+    padding: 9px 16px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,.25);
+    z-index: 100; pointer-events: none;
+  }
+  .toast[hidden] { display: none; }
   .res-fila { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
   .res-col-detalle { flex: 1 1 280px; min-width: 0; }
   .res-detalle { font-size: 16px; font-weight: 600; margin-top: 4px; line-height: 1.4; }
@@ -242,8 +270,17 @@
     </div>
     <div class="resumen" id="resumenAdv" hidden></div>
     <div id="advertenciasAdv"></div>
+    <div class="fila fila-fin">
+      <button class="btn btn-excel" id="btnExport" disabled>📊 Exportar a Excel</button>
+    </div>
     <div class="tabla-wrap">
       <table>
+        <colgroup>
+          <col style="width: 110px">
+          <col style="width: 200px">
+          <col style="width: 160px">
+          <col>
+        </colgroup>
         <thead>
           <tr><th>NRO ITEM</th><th>SIMBOLO</th><th>CODIGO</th><th>DETALLE</th></tr>
         </thead>
@@ -252,14 +289,12 @@
         </tbody>
       </table>
     </div>
-    <div class="fila fila-fin">
-      <button class="btn btn-excel" id="btnExport" disabled>📊 Exportar a Excel</button>
-    </div>
   </section>
 
 </main>
 
 <footer class="pie">Symb0t · Diseño AltF2</footer>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script>
   // ---------- Fuentes de datos (GitHub) ----------
@@ -523,6 +558,13 @@
 
   // ---------- Autocompletado por nombre de cliente ----------
   // Muestra "nro - nombre". Al elegir uno, carga el nro y valida el cliente como si se hubiera tipeado.
+  // Marca en negrita el texto escrito dentro de la opción
+  function resaltar(texto, q) {
+    const i = texto.toLowerCase().indexOf(q);
+    if (!q || i < 0) return esc(texto);
+    return esc(texto.slice(0, i)) + '<strong>' + esc(texto.slice(i, i + q.length)) + '</strong>' + esc(texto.slice(i + q.length));
+  }
+
   function configurarAutocompletado(sec) {
     const S = SEC[sec];
     const input = S.busca;
@@ -548,6 +590,7 @@
       const q = normalizar(input.value);
       if (!q || !clientes.size) { cerrar(); return; }
       const esNumero = /^\d+$/.test(q);
+      const qRaw = input.value.trim().toLowerCase();
       items = [];
       for (const [clave, nombre] of clientes) {
         if (esNumero ? clave.startsWith(q) : normalizar(nombre).includes(q)) {
@@ -557,7 +600,7 @@
       }
       activo = -1;
       lista.innerHTML = items.length
-        ? items.map((it, i) => `<li role="option" data-i="${i}"><span class="mono">${esc(it.clave)}</span> - ${esc(it.nombre)}</li>`).join('')
+        ? items.map((it, i) => `<li role="option" data-i="${i}"><span class="mono">${esNumero ? resaltar(it.clave, qRaw) : esc(it.clave)}</span> - ${esNumero ? esc(it.nombre) : resaltar(it.nombre, qRaw)}</li>`).join('')
         : '<li class="sin">Sin coincidencias</li>';
       lista.hidden = false;
     });
@@ -643,8 +686,8 @@
 
     out.innerHTML =
       '<div class="res-fila">' +
-        '<div><div class="res-label">CÓDIGO</div>' +
-        `<div class="res-codigo">${esc(cod)}</div></div>` +
+        '<div><div class="res-label">CÓDIGO · clic para copiar</div>' +
+        `<span class="code-badge grande copiable" data-copiar="${esc(cod)}" title="Haz clic para copiar">${esc(cod)}</span></div>` +
         `<div class="res-col-detalle"><div class="res-label">DETALLE</div>${detalle}</div>` +
       '</div>' +
       avisos.map(a => `<div class="advertencia">⚠️ ${esc(a)}</div>`).join('');
@@ -666,13 +709,22 @@
       `<tr>
         <td class="mono">${r.item}</td>
         <td class="mono">${esc(r.simbolo)}</td>
-        <td class="mono ${r.codigo === '0' ? 'cero' : ''}">${esc(r.codigo)}</td>
+        <td><span class="code-badge copiable ${r.codigo === '0' ? 'cero' : ''}" data-copiar="${esc(r.codigo)}" title="Haz clic para copiar">${esc(r.codigo)}</span></td>
         <td>${esc(r.detalle)}</td>
       </tr>`
     ).join('');
   }
 
-  function mostrarResumenAdv() {
+  // Advertencias plegables: muestra la cantidad y el detalle al desplegar
+  function renderAvisos(contenedor, avisos) {
+    if (!avisos.length) { contenedor.innerHTML = ''; return; }
+    contenedor.innerHTML =
+      `<details class="avisos"><summary>⚠️ ${avisos.length} advertencia(s), clic para ver el detalle</summary>` +
+      avisos.map(a => `<div class="advertencia">${esc(a)}</div>`).join('') +
+      '</details>';
+  }
+
+  function mostrarResumenAdv(extra = []) {
     const e = estado.adv;
     const total = resultadosAdv.length;
     const encontrados = resultadosAdv.filter(r => r.codigo !== '0').length;
@@ -695,7 +747,7 @@
     if (simbolosRepetidos.size) {
       avisos.push(`${simbolosRepetidos.size} símbolo(s) aparecen repetidos en la base con códigos distintos: ${[...simbolosRepetidos].join(', ')}. Se muestra el primero.`);
     }
-    $('advertenciasAdv').innerHTML = avisos.map(a => `<div class="advertencia">⚠️ ${esc(a)}</div>`).join('');
+    renderAvisos($('advertenciasAdv'), [...avisos, ...extra]);
   }
 
   $('archivoAdv').addEventListener('change', async ev => {
@@ -742,8 +794,7 @@
 
       resultadosAdv = res;
       renderAdv();
-      mostrarResumenAdv();
-      $('advertenciasAdv').innerHTML += avisosDetalle.map(a => `<div class="advertencia">⚠️ ${esc(a)}</div>`).join('');
+      mostrarResumenAdv(avisosDetalle);
       $('btnExport').disabled = false;
     } catch (err) {
       resultadosAdv = [];
@@ -768,6 +819,54 @@
     XLSX.utils.book_append_sheet(libro, hoja, 'Resultados');
     const fecha = new Date().toISOString().slice(0, 10);
     XLSX.writeFile(libro, `Symb0t_${estado.adv.clave}_${fecha}.xlsx`);
+  });
+
+  // ---------- Copiar código al hacer clic ----------
+  async function copiarTexto(texto) {
+    try {
+      await navigator.clipboard.writeText(texto);
+      return true;
+    } catch (e) {
+      // Respaldo para navegadores o contextos sin Clipboard API
+      const ta = document.createElement('textarea');
+      ta.value = texto;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      ta.remove();
+      return ok;
+    }
+  }
+
+  let toastTimer = null;
+  function mostrarToast(texto) {
+    const t = $('toast');
+    t.textContent = texto;
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, 1600);
+  }
+
+  document.addEventListener('click', async e => {
+    const el = e.target.closest('.copiable');
+    if (!el) return;
+    const ok = await copiarTexto(el.dataset.copiar);
+    if (!ok) {
+      mostrarToast('No se pudo copiar. Copialo manualmente.');
+      return;
+    }
+    // Confirmación en el mismo badge, como en la app de referencia
+    const original = el.dataset.original || el.textContent;
+    el.dataset.original = original;
+    el.textContent = '¡Copiado!';
+    el.classList.add('copied');
+    clearTimeout(el._timerCopiado);
+    el._timerCopiado = setTimeout(() => {
+      el.textContent = el.dataset.original;
+      el.classList.remove('copied');
+    }, 1200);
   });
 
   cargarClientes();

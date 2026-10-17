@@ -15,7 +15,7 @@ Si no recordás el nro de cliente, escribí parte del nombre en el campo **Nombr
 1. Ingresá el **nro de cliente** (o elegilo por nombre).
 2. Si el cliente existe y tiene base de símbolos cargada, se habilita el campo **Símbolo**.
 3. Ingresá el símbolo y hacé clic en **Buscar** (o presioná Enter).
-4. Se muestran el **código** interno y el **detalle** del artículo.
+4. Se muestran el **código** interno y el **detalle** del artículo. Hacé clic en el código para copiarlo.
 
 ### Búsqueda avanzada
 
@@ -25,7 +25,8 @@ Si no recordás el nro de cliente, escribí parte del nombre en el campo **Nombr
 4. La tabla muestra **NRO ITEM**, **SIMBOLO**, **CODIGO** y **DETALLE**:
    - El nro de item sigue el orden de las filas: la fila 2 del archivo es el item 1.
    - Si un símbolo no existe en la base del cliente, el código es `0` y el detalle queda vacío.
-5. Exportá el resultado a Excel con el botón correspondiente. La exportación incluye la columna DETALLE.
+5. Hacé clic en un código para copiarlo.
+6. Exportá el resultado a Excel con el botón que está encima de la tabla. La exportación incluye la columna DETALLE.
 
 ## Reglas de validación
 
@@ -55,7 +56,7 @@ Cada base de cliente se agrega como un archivo nuevo con el nro de cliente como 
 
 ### Advertencias
 
-Sin modificar datos, la app advierte cuando:
+Sin modificar datos, la app advierte cuando (las advertencias se muestran en un bloque plegable, con el conteo y el detalle al desplegarlo):
 
 - un código está asociado a varios símbolos en la base del cliente;
 - un símbolo aparece repetido en su base con códigos distintos (se usa el primero);
@@ -70,7 +71,7 @@ El logo se toma del archivo `LOGO AltF2.png` en la misma carpeta. Si no existe, 
 
 ## Estado
 
-Versión 0.2.0 (prototipo). Solo lectura: las altas de vínculos símbolo ↔ código están previstas para una versión posterior, con almacenamiento escribible.
+Versión 0.3.0 (prototipo). Solo lectura: las altas de vínculos símbolo ↔ código están previstas para una versión posterior, con almacenamiento escribible.
 
 Ver [CHANGELOG.md](CHANGELOG.md) para el historial de cambios.
 
