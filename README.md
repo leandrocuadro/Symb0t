@@ -23,11 +23,11 @@ Si no recordás el nro de cliente, escribí parte del nombre en el campo **Nombr
 1. Ingresá el **nro de cliente** (o elegilo por nombre) y verificá la validación.
 2. Si necesitás, descargá la **Plantilla búsqueda masiva** (Excel con la columna `SIMBOLO`). El botón **?** explica cómo usarla.
 3. Cargá un archivo **Excel o CSV de una sola columna** con los símbolos a buscar. La primera fila es el encabezado.
-4. La tabla muestra **NRO ITEM**, **SIMBOLO**, **CODIGO**, **DETALLE** y **MARCA**:
+4. La tabla muestra **NRO ITEM**, **SIMBOLO**, **CODIGO**, **DETALLE**, **MARCA**, **CÓD. ALT.**, **CARACTERÍSTICA**, **CANT. POR BULTO** y **TIPO DE REPOSICIÓN**:
    - El nro de item sigue el orden de las filas: la fila 2 del archivo es el item 1.
    - Si un símbolo no existe en la base del cliente, el código es `0` y el detalle queda vacío.
 5. Hacé clic en un código para copiarlo.
-6. Exportá el resultado a Excel con el botón que está encima de la tabla. La exportación incluye las columnas DETALLE y MARCA.
+6. Exportá el resultado a Excel con el botón que está encima de la tabla. La exportación incluye las mismas columnas de la tabla.
 7. Con **Limpiar resultado** se borran la tabla, el resumen y el archivo cargado. El nro de cliente se mantiene.
 
 ### Plantilla Subida Símbolos Clientes
@@ -77,7 +77,7 @@ El logo se toma del archivo `LOGO AltF2.png` en la misma carpeta. Si no existe, 
 
 ## Estado
 
-Versión 0.6.0 (prototipo). Solo lectura: las altas de vínculos símbolo ↔ código están previstas para una versión posterior, con almacenamiento escribible.
+Versión 0.7.0 (prototipo). Solo lectura: las altas de vínculos símbolo ↔ código están previstas para una versión posterior, con almacenamiento escribible.
 
 Ver [HISTORIAL.md](HISTORIAL.md) para el registro de cambios versión por versión, y [CHANGELOG.md](CHANGELOG.md) para el detalle técnico.
 

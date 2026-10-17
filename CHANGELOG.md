@@ -4,6 +4,14 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 
 Para el registro resumido por versión, ver [HISTORIAL.md](HISTORIAL.md).
 
+## [0.7.0] - 2026-10-17
+
+### Agregado
+- Búsqueda masiva: nuevas columnas CÓD. ALT., CARACTERÍSTICA, CANT. POR BULTO y TIPO DE REPOSICIÓN, también incluidas en la exportación a Excel.
+
+### Cambiado
+- La vista principal ocupa hasta 1600 px, para aprovechar monitores grandes sin scroll lateral en la búsqueda masiva. Se ajustaron los anchos de columna de la tabla.
+
 ## [0.6.0] - 2026-10-17
 
 ### Agregado

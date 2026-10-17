@@ -77,7 +77,7 @@
 
   /* Contenido */
   .contenedor {
-    max-width: 1000px; width: 100%; margin: 28px auto; padding: 0 16px;
+    max-width: 1600px; width: 100%; margin: 28px auto; padding: 0 24px;
     display: flex; flex-direction: column; gap: 22px;
   }
   .tarjeta {
@@ -316,17 +316,21 @@
     <div class="tabla-wrap">
       <table>
         <colgroup>
-          <col style="width: 110px">
-          <col style="width: 200px">
-          <col style="width: 160px">
+          <col style="width: 90px">
+          <col style="width: 170px">
+          <col style="width: 130px">
           <col>
-          <col style="width: 160px">
+          <col style="width: 130px">
+          <col style="width: 140px">
+          <col style="width: 170px">
+          <col style="width: 120px">
+          <col style="width: 170px">
         </colgroup>
         <thead>
-          <tr><th>NRO ITEM</th><th>SIMBOLO</th><th>CODIGO</th><th>DETALLE</th><th>MARCA</th></tr>
+          <tr><th>NRO ITEM</th><th>SIMBOLO</th><th>CODIGO</th><th>DETALLE</th><th>MARCA</th><th>CÓD. ALT.</th><th>CARACTERÍSTICA</th><th>CANT. POR BULTO</th><th>TIPO DE REPOSICIÓN</th></tr>
         </thead>
         <tbody id="tbodyAdv">
-          <tr><td colspan="5" class="vacio">Sin resultados.</td></tr>
+          <tr><td colspan="9" class="vacio">Sin resultados.</td></tr>
         </tbody>
       </table>
     </div>
@@ -798,7 +802,7 @@
   function renderAdv() {
     const tbody = $('tbodyAdv');
     if (!resultadosAdv.length) {
-      tbody.innerHTML = '<tr><td colspan="5" class="vacio">Sin resultados.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="vacio">Sin resultados.</td></tr>';
       return;
     }
     tbody.innerHTML = resultadosAdv.map(r =>
@@ -808,6 +812,10 @@
         <td><span class="code-badge copiable ${r.codigo === '0' ? 'cero' : ''}" data-copiar="${esc(r.codigo)}" title="Haz clic para copiar">${esc(r.codigo)}</span></td>
         <td>${esc(r.detalle)}</td>
         <td>${esc(r.marca)}</td>
+        <td>${esc(r.alt)}</td>
+        <td>${esc(r.caracteristica)}</td>
+        <td>${esc(r.bulto)}</td>
+        <td>${esc(r.reposicion)}</td>
       </tr>`
     ).join('');
   }
@@ -866,7 +874,7 @@
       for (let r = 1; r <= fin; r++) {
         const simbolo = String((filas[r] || [])[0] ?? '').trim();
         const codigo = simbolo ? (e.base.simbolos.get(simbolo) || '0') : '0';
-        res.push({ item: r, simbolo, codigo, detalle: '', marca: '' });
+        res.push({ item: r, simbolo, codigo, detalle: '', marca: '', alt: '', caracteristica: '', bulto: '', reposicion: '' });
       }
 
       // Detalle del artículo desde productos.csv (columna Nombre)
@@ -879,10 +887,14 @@
       } else {
         const repetidos = new Set();
         for (const r of res) {
-          if (r.codigo === '0') { r.detalle = ''; r.marca = ''; continue; }
+          if (r.codigo === '0') { Object.assign(r, { detalle: '', marca: '', alt: '', caracteristica: '', bulto: '', reposicion: '' }); continue; }
           const p = mapa.get(r.codigo);
           r.detalle = p ? p.nombre : 'Sin detalle en la base de productos';
           r.marca = p ? p.marca : '';
+          r.alt = p ? p.alt : '';
+          r.caracteristica = p ? p.caracteristica : '';
+          r.bulto = p ? p.bulto : '';
+          r.reposicion = p ? p.reposicion : '';
           if (p && p.repetido) repetidos.add(r.codigo);
         }
         if (repetidos.size) {
@@ -910,9 +922,14 @@
 
   $('btnExport').addEventListener('click', () => {
     if (!resultadosAdv.length || !estado.adv) return;
-    const datos = resultadosAdv.map(r => ({ 'NRO ITEM': r.item, 'SIMBOLO': r.simbolo, 'CODIGO': r.codigo, 'DETALLE': r.detalle, 'MARCA': r.marca }));
-    const hoja = XLSX.utils.json_to_sheet(datos, { header: ['NRO ITEM', 'SIMBOLO', 'CODIGO', 'DETALLE', 'MARCA'] });
-    hoja['!cols'] = [{ wch: 10 }, { wch: 18 }, { wch: 14 }, { wch: 60 }, { wch: 24 }];
+    const datos = resultadosAdv.map(r => ({
+      'NRO ITEM': r.item, 'SIMBOLO': r.simbolo, 'CODIGO': r.codigo, 'DETALLE': r.detalle, 'MARCA': r.marca,
+      'CÓD. ALT.': r.alt, 'CARACTERÍSTICA': r.caracteristica, 'CANT. POR BULTO': r.bulto, 'TIPO DE REPOSICIÓN': r.reposicion
+    }));
+    const hoja = XLSX.utils.json_to_sheet(datos, {
+      header: ['NRO ITEM', 'SIMBOLO', 'CODIGO', 'DETALLE', 'MARCA', 'CÓD. ALT.', 'CARACTERÍSTICA', 'CANT. POR BULTO', 'TIPO DE REPOSICIÓN']
+    });
+    hoja['!cols'] = [{ wch: 10 }, { wch: 18 }, { wch: 14 }, { wch: 60 }, { wch: 24 }, { wch: 18 }, { wch: 26 }, { wch: 16 }, { wch: 22 }];
     const libro = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(libro, hoja, 'Resultados');
     const fecha = new Date().toISOString().slice(0, 10);

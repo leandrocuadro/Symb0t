@@ -6,6 +6,18 @@ Cada subida a GitHub agrega una entrada nueva con el número de versión, el tí
 
 ---
 
+## v0.7.0 — Búsqueda masiva ampliada y vista más ancha
+
+**Fecha:** 2026-10-17 · **Commit:** `(se completa al subir)`
+
+### Agregado
+- Búsqueda masiva: nuevas columnas CÓD. ALT., CARACTERÍSTICA, CANT. POR BULTO y TIPO DE REPOSICIÓN, también incluidas en la exportación a Excel.
+
+### Cambiado
+- La vista principal ocupa hasta 1600 px, para aprovechar monitores grandes sin scroll lateral en la búsqueda masiva. Se ajustaron los anchos de columna de la tabla.
+
+---
+
 ## v0.6.0 — Plantilla de base de símbolos con duplicados resaltados
 
 **Fecha:** 2026-10-17 · **Commit:** `3259cf1`
