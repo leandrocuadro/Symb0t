@@ -197,6 +197,10 @@
   .toast[hidden] { display: none; }
   .res-fila { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
   .res-col-detalle { flex: 1 1 280px; min-width: 0; }
+  /* Varios códigos por símbolo: un bloque por código, separado con línea punteada */
+  .res-encabezado { display: block; margin-bottom: 12px; }
+  .res-bloque + .res-bloque { margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border-light); }
+  .res-bloque > div:first-child { flex: 0 0 auto; min-width: 170px; }
   .res-detalle { font-size: 16px; font-weight: 600; margin-top: 4px; line-height: 1.4; }
   .res-marca-principal { font-size: 18px; font-weight: 700; color: var(--text-main); margin-top: 10px; line-height: 1.3; }
   .res-marca-principal .res-label { font-size: 11px; font-weight: 700; color: var(--light); letter-spacing: .5px; margin-right: 10px; vertical-align: middle; }
@@ -272,7 +276,7 @@
       <span class="ayuda-flotante a-derecha">
         <button class="btn btn-secundario" id="btnPlantillaModelo" type="button">📄 Plantilla Subida Símbolos Clientes</button>
         <button class="btn-ayuda" type="button" aria-label="Ayuda" aria-describedby="ayudaSubida">?</button>
-        <span class="ayuda-texto" id="ayudaSubida" role="tooltip">Plantilla para armar la base de símbolos de un cliente, con las columnas simbolo y codigo. Los valores repetidos en cada columna se marcan en rojo, para corregirlos antes de subir el archivo a la base de datos con el nombre NRO_CLIENTE.csv (por ejemplo 22434.csv).</span>
+        <span class="ayuda-texto" id="ayudaSubida" role="tooltip">Plantilla para armar la base de símbolos de un cliente, con las columnas simbolo y codigo. Los valores repetidos en cada columna se marcan en rojo, para corregirlos antes de subir el archivo a la base de datos con el nombre NRO_CLIENTE.parquet (por ejemplo 22434.parquet).</span>
       </span>
     </div>
     <div class="resultado" id="resStd" hidden></div>
@@ -342,10 +346,13 @@
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script>
-  // ---------- Fuentes de datos (GitHub) ----------
-  const URL_CLIENTES = 'https://raw.githubusercontent.com/leandrocuadro/clientesegu/refs/heads/main/clientes.csv';
-  const URL_BASE = clave => `https://raw.githubusercontent.com/leandrocuadro/SIMBOLOS/refs/heads/main/${encodeURIComponent(clave)}.csv`;
-  const URL_PRODUCTOS = 'https://raw.githubusercontent.com/leandrocuadro/productos.csv/refs/heads/main/productos.csv';
+  // ---------- Fuentes de datos (GitHub + respaldo local) ----------
+  const URL_CLIENTES = 'https://raw.githubusercontent.com/leandrocuadro/SGF/main/clientes.parquet';
+  const URL_CLIENTES_LOCAL = './clientes.parquet';
+  const URL_BASE = clave => `https://raw.githubusercontent.com/leandrocuadro/SGF/main/simbolos/${encodeURIComponent(clave)}.parquet`;
+  const URL_BASE_LOCAL = clave => `./SIMBOLOS/${encodeURIComponent(clave)}.parquet`;
+  const URL_PRODUCTOS = 'https://raw.githubusercontent.com/leandrocuadro/SGF/main/productos.parquet';
+  const URL_PRODUCTOS_LOCAL = './productos.parquet';
   // Plantilla modelo de la base de símbolos (2 columnas, duplicados resaltados en rojo)
   const PLANTILLA_MODELO_B64 = "UEsDBBQAAAAIABydUV1Gx01IlQAAAM0AAAAQAAAAZG9jUHJvcHMvYXBwLnhtbE3PTQvCMAwG4L9SdreZih6kDkQ9ip68zy51hbYpbYT67+0EP255ecgboi6JIia2mEXxLuRtMzLHDUDWI/o+y8qhiqHke64x3YGMsRoPpB8eA8OibdeAhTEMOMzit7Dp1C5GZ3XPlkJ3sjpRJsPiWDQ6sScfq9wcChDneiU+ixNLOZcrBf+LU8sVU57mym/8ZAW/B7oXUEsDBBQAAAAIABydUV0cucXF7wAAACsCAAARAAAAZG9jUHJvcHMvY29yZS54bWzNksFOwzAMhl8F5d666WATUZcL004gITEJxC1KvC2iSaPEqN3b04atE4IH4Bj7z+fPkhsdhO4iPscuYCSL6WZwrU9ChzU7EgUBkPQRnUrlmPBjc99Fp2h8xgMEpT/UAaGuqiU4JGUUKZiARZiJTDZGCx1RURfPeKNnfPiMbYYZDdiiQ08JeMmByWliOA1tA1fABCOMLn0X0MzEXP0TmzvAzskh2TnV933ZL3Ju3IHD29PjS163sD6R8hrHX8kKOgVcs8vk18XDZrdlsq7qZcGrgq92/F7cVuJu9T65/vC7CrvO2L39x8YXQdnAr7uQX1BLAwQUAAAACAAcnVFdmVycIxAGAACcJwAAEwAAAHhsL3RoZW1lL3RoZW1lMS54bWztWltz2jgUfu+v0Hhn9m0LxjaBtrQTc2l227SZhO1OH4URWI1seWSRhH+/RzYQy5YN7ZJNups8BCzp+85FR+foOHnz7i5i6IaIlPJ4YNkv29a7ty/e4FcyJBFBMBmnr/DACqVMXrVaaQDDOH3JExLD3IKLCEt4FMvWXOBbGi8j1uq0291WhGlsoRhHZGB9XixoQNBUUVpvXyC05R8z+BXLVI1lowETV0EmuYi08vlsxfza3j5lz+k6HTKBbjAbWCB/zm+n5E5aiOFUwsTAamc/VmvH0dJIgILJfZQFukn2o9MVCDINOzqdWM52fPbE7Z+Mytp0NG0a4OPxeDi2y9KLcBwE4FG7nsKd9Gy/pEEJtKNp0GTY9tqukaaqjVNP0/d93+ubaJwKjVtP02t33dOOicat0HgNvvFPh8Ouicar0HTraSYn/a5rpOkWaEJG4+t6EhW15UDTIABYcHbWzNIDll4p+nWUGtkdu91BXPBY7jmJEf7GxQTWadIZljRGcp2QBQ4AN8TRTFB8r0G2iuDCktJckNbPKbVQGgiayIH1R4Ihxdyv/fWXu8mkM3qdfTrOa5R/aasBp+27m8+T/HPo5J+nk9dNQs5wvCwJ8fsjW2GHJ247E3I6HGdCfM/29pGlJTLP7/kK6048Zx9WlrBdz8/knoxyI7vd9lh99k9HbiPXqcCzIteURiRFn8gtuuQROLVJDTITPwidhphqUBwCpAkxlqGG+LTGrBHgE323vgjI342I96tvmj1XoVhJ2oT4EEYa4pxz5nPRbPsHpUbR9lW83KOXWBUBlxjfNKo1LMXWeJXA8a2cPB0TEs2UCwZBhpckJhKpOX5NSBP+K6Xa/pzTQPCULyT6SpGPabMjp3QmzegzGsFGrxt1h2jSPHr+BfmcNQockRsdAmcbs0YhhGm78B6vJI6arcIRK0I+Yhk2GnK1FoG2camEYFoSxtF4TtK0EfxZrDWTPmDI7M2Rdc7WkQ4Rkl43Qj5izouQEb8ehjhKmu2icVgE/Z5ew0nB6ILLZv24fobVM2wsjvdH1BdK5A8mpz/pMjQHo5pZCb2EVmqfqoc0PqgeMgoF8bkePuV6eAo3lsa8UK6CewH/0do3wqv4gsA5fy59z6XvufQ9odK3NyN9Z8HTi1veRm5bxPuuMdrXNC4oY1dyzcjHVK+TKdg5n8Ds/Wg+nvHt+tkkhK+aWS0jFpBLgbNBJLj8i8rwKsQJ6GRbJQnLVNNlN4oSnkIbbulT9UqV1+WvuSi4PFvk6a+hdD4sz/k8X+e0zQszQ7dyS+q2lL61JjhK9LHMcE4eyww7ZzySHbZ3oB01+/ZdduQjpTBTl0O4GkK+A226ndw6OJ6YkbkK01KQb8P56cV4GuI52QS5fZhXbefY0dH758FRsKPvPJYdx4jyoiHuoYaYz8NDh3l7X5hnlcZQNBRtbKwkLEa3YLjX8SwU4GRgLaAHg69RAvJSVWAxW8YDK5CifEyMRehw55dcX+PRkuPbpmW1bq8pdxltIlI5wmmYE2eryt5lscFVHc9VW/Kwvmo9tBVOz/5ZrcifDBFOFgsSSGOUF6ZKovMZU77nK0nEVTi/RTO2EpcYvOPmx3FOU7gSdrYPAjK5uzmpemUxZ6by3y0MCSxbiFkS4k1d7dXnm5yueiJ2+pd3wWDy/XDJRw/lO+df9F1Drn723eP6bpM7SEycecURAXRFAiOVHAYWFzLkUO6SkAYTAc2UyUTwAoJkphyAmPoLvfIMuSkVzq0+OX9FLIOGTl7SJRIUirAMBSEXcuPv75Nqd4zX+iyBbYRUMmTVF8pDicE9M3JD2FQl867aJguF2+JUzbsaviZgS8N6bp0tJ//bXtQ9tBc9RvOjmeAes4dzm3q4wkWs/1jWHvky3zlw2zreA17mEyxDpH7BfYqKgBGrYr66r0/5JZw7tHvxgSCb/NbbpPbd4Ax81KtapWQrET9LB3wfkgZjjFv0NF+PFGKtprGtxtoxDHmAWPMMoWY434dFmhoz1YusOY0Kb0HVQOU/29QNaPYNNByRBV4xmbY2o+ROCjzc/u8NsMLEjuHti78BUEsDBBQAAAAIABydUV3+geQw3zgAACxYAgAYAAAAeGwvd29ya3NoZWV0cy9zaGVldDEueG1slZ3rrl6HeR5vReAFVNznvQPLQJ2gaIEWCBK0/U1blE2EElWKrpNefUna0Tfr6azZu38SUUMOD3kfReLwW+s3f/nw8V9++dPbt5+++dcf3//0y3ev/vTp089/9+23v/zhT29/fPPLf/jw89ufPpMfPnz88c2nz1/8+Mdvf/n549s333/9Rj++//b69ev7b3988+6nV7/9zde/948ff/ubD3/+9P7dT2//8eM3v/z5xx/ffPy33719/+Ev3726evXvf+Of3v3xT5++/I1vf/ubn9/88e0/v/3033/+x4+fv/Ttr5bv3/349qdf3n346ZuPb3/47tV/vPq7333+3l5/+SZfv87/ePf2L7/gr7/58pP5/YcP//LlC//l++9evX71Rf7T22/+7Z9/fv/u63f3zacPP//Xtz98+vu3799/Vl6/+ubNHz69+99v//HzV/vu1e8/fPr04ccv/PMP9NObT5//1g8fP/yftz99/T7fvn/7+et+/uH8/P985b9K/ib98rP8X3/7Ib/69Wf05QfFv/73H/l/+vpL+/mX6vdvfnn79x/e/89333/603evHl998/3bH978+f2nf/rwl//89m+/XHdffH/48P6Xr//zm7/89etef/5p/OHPv3z+0fztG3/+Efz47qe//u83//q3X+aXfIPrv32D668/7r9+R19/lP/w5tOb3/7m44e/fPPxy9f+bPvyF19/qn/9Zf3u1bufvvzf/J8/ffxM333+dp9++8u7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";
 
@@ -356,9 +363,10 @@
   };
 
   const clientes = new Map();   // clave -> nombre
-  const bases = new Map();      // clave -> { simbolos, codigos, repetidos } | null
+  const bases = new Map();      // clave -> { porSimbolo, codigos, duplicados, sinCodigo } | null
   const estado = { std: null, adv: null };   // resultado de validar el cliente
   const seq = { std: 0, adv: 0 };            // descarta respuestas viejas
+  let busquedaStd = 0;                       // descarta búsquedas de símbolo viejas
   let resultadosAdv = [];
 
   const $ = id => document.getElementById(id);
@@ -373,51 +381,145 @@
   const claveCliente = s => String(s ?? '').replace(/\s+/g, '').replace(/^0+(?=\d)/, '');
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  // Algunos CSV vienen en Windows-1252 (Ñ y tildes): probamos UTF-8 y, si falla, Windows-1252
-  function decodificar(buffer) {
-    try { return new TextDecoder('utf-8', { fatal: true }).decode(buffer); }
-    catch (e) { return new TextDecoder('windows-1252').decode(buffer); }
+  // ---------- Lectura de Parquet (hyparquet + HTTP Range) ----------
+  const HYPARQUET_CDN = 'https://cdn.jsdelivr.net/npm/hyparquet@1.31.5/+esm';
+  let hyparquetPromesa = null;
+
+  function versionCache() {
+    const manual = new URLSearchParams(window.location.search).get('v');
+    return manual || String(Date.now());
   }
 
-  // Parser CSV con separador ";", comillas y BOM
-  function parsearCSV(texto) {
-    texto = texto.replace(/^﻿/, '');
-    const filas = [];
-    let fila = [], celda = '', entreComillas = false;
-    for (let i = 0; i < texto.length; i++) {
-      const c = texto[i];
-      if (entreComillas) {
-        if (c === '"') {
-          if (texto[i + 1] === '"') { celda += '"'; i++; } else entreComillas = false;
-        } else celda += c;
-      } else if (c === '"') {
-        entreComillas = true;
-      } else if (c === ';') {
-        fila.push(celda); celda = '';
-      } else if (c === '\n' || c === '\r') {
-        if (c === '\r' && texto[i + 1] === '\n') i++;
-        fila.push(celda); filas.push(fila); fila = []; celda = '';
-      } else celda += c;
+  function urlConVersion(url, version) {
+    const sep = url.includes('?') ? '&' : '?';
+    return `${url}${sep}v=${encodeURIComponent(version)}`;
+  }
+
+  // AsyncBuffer mínimo sobre HTTP Range, con errores claros.
+  async function crearBufferParquet(url) {
+    const version = versionCache();
+    const urlVersion = urlConVersion(url, version);
+    const head = await fetch(urlVersion, { method: 'HEAD', cache: 'no-store' });
+    if (!head.ok) {
+      const err = new Error(`HTTP ${head.status}`);
+      err.status = head.status;
+      throw err;
     }
-    if (celda !== '' || fila.length) { fila.push(celda); filas.push(fila); }
-    return filas
-      .map(f => f.map(v => v.trim()))
-      .filter(f => f.some(v => v !== ''));
+    const total = Number(head.headers.get('Content-Length') || 0);
+    if (!Number.isFinite(total) || total <= 0) {
+      throw new Error('El servidor no informó el tamaño del archivo.');
+    }
+    return {
+      byteLength: total,
+      async slice(start, end = total) {
+        const desde = Math.max(0, Number(start) || 0);
+        const hasta = Math.min(total, end === undefined || end === null
+          ? total : Number(end));
+        if (hasta <= desde) return new ArrayBuffer(0);
+        const res = await fetch(urlVersion, {
+          headers: { Range: `bytes=${desde}-${hasta - 1}` },
+          cache: 'no-store'
+        });
+        if (!res.ok && res.status !== 206) {
+          const err = new Error(`HTTP ${res.status}`);
+          err.status = res.status;
+          throw err;
+        }
+        const buf = await res.arrayBuffer();
+        if (res.status === 206) return buf;
+        // Algunos servidores ignoran Range y devuelven el archivo completo.
+        return buf.slice(desde, hasta);
+      }
+    };
+  }
+
+  function describirErrorParquet(err) {
+    if (!err) return 'Error desconocido.';
+    if (err.status === 404) return 'No se encontró el archivo Parquet (404). Verificá que esté subido a GitHub.';
+    if (err.status === 403) return 'GitHub rechazó la descarga (403). Verificá que el repositorio sea público.';
+    if (err.name === 'TypeError') return 'No se pudo conectar. Verificá tu conexión a internet.';
+    if (/parquet file invalid|footer|PAR1|invalid parquet/i.test(String(err.message || ''))) {
+      return 'El archivo no es un Parquet válido. Volvé a generarlo con el conversor.';
+    }
+    return err.message || String(err);
+  }
+
+  // El archivo no existe (o el repo no es público): el cliente no tiene base cargada.
+  function esErrorNoEncontrado(err) {
+    return !!err && [403, 404, 410].includes(Number(err.status));
+  }
+
+  // Caída de red o error del servidor: se puede reintentar.
+  function esErrorConexion(err) {
+    if (!err) return false;
+    if (err.name === 'TypeError' || err.name === 'AbortError') return true;
+    const status = Number(err.status);
+    return Number.isFinite(status) && status >= 500;
+  }
+
+  function cargarHyparquet() {
+    if (!hyparquetPromesa) {
+      hyparquetPromesa = import(HYPARQUET_CDN).catch(err => {
+        hyparquetPromesa = null;
+        throw err;
+      });
+    }
+    return hyparquetPromesa;
+  }
+
+  async function leerParquet(urls) {
+    const hyparquet = await cargarHyparquet();
+    let ultimoError = null;
+    let conexion = false;
+    let noEncontrado = false;
+    for (let i = 0; i < urls.length; i++) {
+      const url = urls[i];
+      try {
+        const file = await crearBufferParquet(url);
+        return await hyparquet.parquetReadObjects({ file });
+      } catch (e) {
+        ultimoError = e;
+        // El primer origen (GitHub) es el que define el diagnóstico:
+        // un 404 ahí significa "el cliente no tiene base"; una caída de red, "error de conexión".
+        if (i === 0) {
+          conexion = esErrorConexion(e);
+          noEncontrado = esErrorNoEncontrado(e);
+        }
+        console.warn('No se pudo leer el Parquet:', url, e);
+      }
+    }
+    const err = ultimoError || new Error('No se pudo leer el archivo Parquet.');
+    err.conexion = conexion;
+    err.noEncontrado = noEncontrado;
+    throw err;
+  }
+
+  // Busca la clave real de un objeto probando nombres (sin acentos/mayúsculas).
+  function buscarClave(obj, nombresPosibles) {
+    if (!obj) return null;
+    const keys = Object.keys(obj);
+    for (const posible of nombresPosibles) {
+      const buscado = normalizar(posible);
+      for (const key of keys) {
+        const actual = normalizar(key);
+        if (actual === buscado || actual.includes(buscado)) return key;
+      }
+    }
+    return null;
   }
 
   // ---------- Carga de datos ----------
   async function cargarClientes() {
     const est = $('estadoCatalogo');
     try {
-      const res = await fetch(URL_CLIENTES);
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const filas = parsearCSV(decodificar(await res.arrayBuffer()));
-      const cab = filas[0].map(normalizar);
-      const iC = cab.indexOf('codigo'), iN = cab.indexOf('nombre');
-      if (iC < 0 || iN < 0) throw new Error('El archivo de clientes no tiene las columnas codigo y nombre');
-      for (const f of filas.slice(1)) {
-        const clave = claveCliente(f[iC]);
-        const nombre = (f[iN] || '').replace(/\s+/g, ' ').trim();
+      const filas = await leerParquet([URL_CLIENTES, URL_CLIENTES_LOCAL]);
+      if (!filas || !filas.length) throw new Error('El archivo de clientes está vacío.');
+      const kC = buscarClave(filas[0], ['codigo']);
+      const kN = buscarClave(filas[0], ['nombre']);
+      if (kC === null || kN === null) throw new Error('El archivo de clientes no tiene las columnas codigo y nombre');
+      for (const f of filas) {
+        const clave = claveCliente(f[kC]);
+        const nombre = String(f[kN] ?? '').replace(/\s+/g, ' ').trim();
         // Entradas de baja o de prueba, marcadas "NO USAR" en la base
         if (!clave || !nombre || /no usar/i.test(nombre)) continue;
         clientes.set(clave, nombre);
@@ -426,43 +528,71 @@
       est.className = 'pill ok';
     } catch (e) {
       console.error(e);
-      est.textContent = '❌ No se pudo cargar la base de clientes. Verificá tu conexión.';
+      est.textContent = '❌ Base de clientes: ' + describirErrorParquet(e);
       est.className = 'pill error';
     }
   }
 
-  // Carga la base SIMBOLOS/<nro>.csv del cliente. Devuelve null si no existe.
+  // Carga la base SIMBOLOS/<nro>.parquet del cliente. Devuelve null si no existe.
+  // Un símbolo puede tener varios códigos (1:N): se acumulan todos.
+  // La clave del índice está normalizada (sin mayúsculas/acentos) para buscar flexible.
   async function cargarBase(clave) {
     if (bases.has(clave)) return bases.get(clave);
-    let res;
-    try { res = await fetch(URL_BASE(clave)); }
-    catch (e) { return null; }                 // sin conexión: no se cachea
-    if (!res.ok) { bases.set(clave, null); return null; }
+    let filas;
+    try {
+      filas = await leerParquet([URL_BASE(clave), URL_BASE_LOCAL(clave)]);
+    } catch (e) {
+      console.error(e);
+      // Archivo inexistente o sin acceso: el cliente no tiene base. Se cachea null.
+      // Error de red o archivo inválido: no se cachea, para reintentar en la próxima consulta.
+      if (e && (e.noEncontrado || esErrorNoEncontrado(e))) {
+        bases.set(clave, null);
+        return null;
+      }
+      throw e;
+    }
 
-    const filas = parsearCSV(decodificar(await res.arrayBuffer()));
-    const cab = filas.length ? filas[0].map(normalizar) : [];
-    const hayEncabezado = cab.includes('simbolo') && cab.includes('codigo');
-    const iS = hayEncabezado ? cab.indexOf('simbolo') : 0;
-    const iC = hayEncabezado ? cab.indexOf('codigo') : 1;
+    const primera = filas[0] || {};
+    const keys = Object.keys(primera);
+    const kS = buscarClave(primera, ['simbolo']);
+    const kC = buscarClave(primera, ['codigo']);
+    const hayEncabezado = kS !== null && kC !== null;
+    const claveSimbolo = hayEncabezado ? kS : (keys[0] || null);
+    const claveCodigo = hayEncabezado ? kC : (keys[1] || null);
 
-    const simbolos = new Map();   // símbolo -> código
-    const codigos = new Map();    // código -> Set de símbolos (para advertir)
-    const repetidos = new Set();  // símbolos repetidos con códigos distintos
-    for (const f of filas.slice(hayEncabezado ? 1 : 0)) {
-      const s = (f[iS] || '').trim();
-      const c = (f[iC] || '').trim();
-      if (!s) continue;
-      if (simbolos.has(s)) {
-        if (simbolos.get(s) !== c) repetidos.add(s);   // se respeta el primero
+    const porSimbolo = new Map();  // clave normalizada -> { simbolo, codigos: [] }
+    const codigos = new Map();     // código -> Set de símbolos (para advertir)
+    const duplicados = new Set();  // "clave||codigo" repetidos exactos en la base
+    const sinCodigo = new Set();   // claves de símbolos que aparecen sin código
+    let sinSimbolo = 0;            // filas con código pero sin símbolo (no deberían existir)
+
+    for (const f of filas) {
+      const s = String((claveSimbolo ? f[claveSimbolo] : '') ?? '').trim();
+      const c = String((claveCodigo ? f[claveCodigo] : '') ?? '').trim();
+      if (!s) {
+        if (c) sinSimbolo++;
         continue;
       }
-      simbolos.set(s, c);
-      if (c) {
-        if (!codigos.has(c)) codigos.set(c, new Set());
-        codigos.get(c).add(s);
+      const ns = normalizar(s);
+      if (!ns) continue;
+      let entrada = porSimbolo.get(ns);
+      if (!entrada) {
+        entrada = { simbolo: s, codigos: [] };
+        porSimbolo.set(ns, entrada);
       }
+      if (!c) {
+        sinCodigo.add(ns);
+        continue;
+      }
+      if (entrada.codigos.includes(c)) {
+        duplicados.add(`${ns}||${c}`);
+        continue;
+      }
+      entrada.codigos.push(c);
+      if (!codigos.has(c)) codigos.set(c, new Set());
+      codigos.get(c).add(entrada.simbolo);
     }
-    const base = { simbolos, codigos, repetidos };
+    const base = { porSimbolo, codigos, duplicados, sinCodigo, sinSimbolo };
     bases.set(clave, base);
     return base;
   }
@@ -472,23 +602,24 @@
   function cargarProductos() {
     if (!productosPromesa) {
       productosPromesa = (async () => {
-        const res = await fetch(URL_PRODUCTOS);
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const filas = parsearCSV(decodificar(await res.arrayBuffer()));
-        const cab = filas[0].map(normalizar);
-        const iC = cab.indexOf('codigo'), iN = cab.indexOf('nombre');
-        if (iC < 0 || iN < 0) throw new Error('El archivo de productos no tiene las columnas Código y Nombre');
-        const iM = cab.indexOf('marca'), iAlt = cab.indexOf('codigo alternativo');
-        const iCar = cab.indexOf('caracteristica'), iRep = cab.indexOf('tipo de reposicion');
-        const iBul = cab.indexOf('cantidad por bulto');
-        const valor = (f, i) => (i >= 0 ? (f[i] || '').replace(/\s+/g, ' ').trim() : '');
+        const filas = await leerParquet([URL_PRODUCTOS, URL_PRODUCTOS_LOCAL]);
+        if (!filas || !filas.length) throw new Error('El archivo de productos está vacío.');
+        const kC = buscarClave(filas[0], ['codigo']);
+        const kN = buscarClave(filas[0], ['nombre']);
+        if (kC === null || kN === null) throw new Error('El archivo de productos no tiene las columnas Código y Nombre');
+        const kM = buscarClave(filas[0], ['marca']);
+        const kAlt = buscarClave(filas[0], ['codigo alternativo']);
+        const kCar = buscarClave(filas[0], ['caracteristica']);
+        const kRep = buscarClave(filas[0], ['tipo de reposicion']);
+        const kBul = buscarClave(filas[0], ['cantidad por bulto']);
+        const valor = (f, k) => (k ? String(f[k] ?? '').replace(/\s+/g, ' ').trim() : '');
         const mapa = new Map();   // código -> { nombre, marca, alt, caracteristica, reposicion, bulto, repetido }
-        for (const f of filas.slice(1)) {
-          const cod = (f[iC] || '').trim();
+        for (const f of filas) {
+          const cod = String(f[kC] ?? '').trim();
           if (!cod) continue;
           const datos = {
-            nombre: valor(f, iN), marca: valor(f, iM), alt: valor(f, iAlt),
-            caracteristica: valor(f, iCar), reposicion: valor(f, iRep), bulto: valor(f, iBul)
+            nombre: valor(f, kN), marca: valor(f, kM), alt: valor(f, kAlt),
+            caracteristica: valor(f, kCar), reposicion: valor(f, kRep), bulto: valor(f, kBul)
           };
           const previo = mapa.get(cod);
           if (!previo) { mapa.set(cod, { ...datos, repetido: false }); continue; }
@@ -516,21 +647,38 @@
     if (!clave) return { estado: 'vacio' };
     if (!clientes.size) return { estado: 'sin_catalogo' };
     if (!clientes.has(clave)) return { estado: 'inexistente' };
-    const base = await cargarBase(clave);
-    if (!base) return { estado: 'sin_base' };
-    return { estado: 'ok', clave, nombre: clientes.get(clave), base };
+    const nombre = clientes.get(clave);
+    let base;
+    try {
+      base = await cargarBase(clave);
+    } catch (e) {
+      console.error(e);
+      return {
+        estado: 'error_conexion',
+        clave,
+        nombre,
+        mensaje: e && e.conexion === false
+          ? 'No se pudo leer la base de símbolos: ' + describirErrorParquet(e)
+          : 'Error de conexión al descargar la base de este cliente. Verificá tu internet e intentá de nuevo.'
+      };
+    }
+    if (!base) return { estado: 'sin_base', clave, nombre };
+    return { estado: 'ok', clave, nombre, base };
   }
 
   function habilitarControles(sec) {
-    const ok = !!estado[sec];
+    const r = estado[sec];
+    // Con error de conexión se habilitan los controles para poder reintentar.
+    const puedeBuscar = !!r && (r.estado === 'ok' || r.estado === 'error_conexion');
+    const tieneBase = !!r && r.estado === 'ok';
     if (sec === 'std') {
-      $('simStd').disabled = !ok;
-      $('btnStd').disabled = !ok;
-      if (!ok) $('simStd').value = '';
+      $('simStd').disabled = !puedeBuscar;
+      $('btnStd').disabled = !puedeBuscar;
+      if (!puedeBuscar) $('simStd').value = '';
     } else {
-      $('archivoAdv').disabled = !ok;
-      $('lblArchivo').classList.toggle('deshabilitado', !ok);
-      $('ayudaArchivo').textContent = ok
+      $('archivoAdv').disabled = !tieneBase;
+      $('lblArchivo').classList.toggle('deshabilitado', !tieneBase);
+      $('ayudaArchivo').textContent = tieneBase
         ? 'Subí un Excel o CSV con una sola columna de símbolos. La primera fila es el encabezado.'
         : 'Ingresá un cliente válido para habilitar la carga.';
     }
@@ -538,6 +686,7 @@
 
   function limpiarResultado(sec) {
     if (sec === 'std') {
+      busquedaStd++;                    // descarta una búsqueda en curso
       $('resStd').hidden = true;
       $('resStd').innerHTML = '';
     } else {
@@ -572,9 +721,9 @@
     const r = await evaluarCliente(clave);
     if (id !== seq[sec]) return;                 // llegó una respuesta vieja
 
-    estado[sec] = r.estado === 'ok' ? r : null;
+    estado[sec] = r;
     if (r.estado === 'ok') S.busca.value = `${r.clave}-${r.nombre}`;
-    const msg = MENSAJES[r.estado] || '';
+    const msg = r.mensaje || MENSAJES[r.estado] || '';
     S.aviso.className = 'aviso error';
     S.aviso.textContent = msg;
     S.aviso.hidden = !msg;
@@ -696,66 +845,122 @@
   });
 
   // ---------- Búsqueda estándar ----------
-  async function buscarStd() {
-    const e = estado.std;
-    const sim = $('simStd').value.trim();
-    if (!e || !sim) return;
-    const out = $('resStd');
-    const cod = e.base.simbolos.get(sim);
+  // Un símbolo puede tener varios códigos: se listan todos.
+  function ordenarCodigos(lista) {
+    return [...lista].sort((a, b) => a.localeCompare(b, 'es', { numeric: true, sensitivity: 'base' }));
+  }
 
-    if (cod === undefined) {
-      out.innerHTML = '<div class="res-error">Símbolo no encontrado en la base de este cliente.</div>';
-      out.hidden = false;
+  // Detalle de un código (mismo formato visual que la app original)
+  function detalleCodigo(producto) {
+    if (!producto.ok) {
+      return {
+        html: '<div class="res-sin">No se pudo cargar la base de productos por un error de conexión. Verificá tu internet.</div>',
+        aviso: ''
+      };
+    }
+    if (!producto.nombre) {
+      return { html: '<div class="res-sin">Este código no figura en la base de productos.</div>', aviso: '' };
+    }
+    // Orden por relevancia: detalle (grande), marca (destacada) y datos menores (chicos)
+    const dato = (etiqueta, valor) => valor
+      ? `<span class="res-dato"><span class="res-label">${etiqueta}</span> ${esc(valor)}</span>`
+      : '';
+    const menores = [
+      dato('CÓD. ALT.', producto.alt),
+      dato('CARACTERÍSTICA', producto.caracteristica),
+      dato('CANT. POR BULTO', producto.bulto),
+      dato('TIPO DE REPOSICIÓN', producto.reposicion)
+    ].join('');
+    return {
+      html: `<div class="res-detalle">${esc(producto.nombre)}</div>` +
+        (producto.marca ? `<div class="res-marca-principal"><span class="res-label">MARCA</span>${esc(producto.marca)}</div>` : '') +
+        (menores ? `<div class="res-menores">${menores}</div>` : ''),
+      aviso: producto.repetido
+        ? 'aparece en la base de productos con nombres distintos. Se muestra el primero.'
+        : ''
+    };
+  }
+
+  async function buscarStd() {
+    const out = $('resStd');
+    const sim = $('simStd').value.trim();
+    const previo = estado.std;
+    if (!previo || !sim) return;
+    if (previo.estado !== 'ok' && previo.estado !== 'error_conexion') return;
+
+    const mid = ++busquedaStd;
+    // Limpia el resultado anterior y muestra el estado de búsqueda
+    out.hidden = false;
+    out.innerHTML = '<div class="res-sin">Buscando...</div>';
+
+    let e = previo;
+    if (e.estado === 'error_conexion') {
+      // Reintenta la descarga de la base antes de buscar
+      const r = await evaluarCliente(e.clave);
+      if (mid !== busquedaStd) return;
+      estado.std = r;
+      habilitarControles('std');
+      const msg = r.mensaje || MENSAJES[r.estado] || '';
+      SEC.std.aviso.className = 'aviso error';
+      SEC.std.aviso.textContent = msg;
+      SEC.std.aviso.hidden = !msg;
+      if (r.estado !== 'ok') {
+        out.innerHTML = `<div class="res-error">${esc(msg || 'No se pudo cargar la base de este cliente.')}</div>`;
+        return;
+      }
+      e = r;
+    }
+    if (!e || e.estado !== 'ok') return;
+
+    const claveSim = normalizar(sim);
+    const entrada = e.base.porSimbolo.get(claveSim);
+    if (!entrada) {
+      out.innerHTML = `<div class="res-error">No se encontraron códigos para el símbolo «${esc(sim)}».</div>`;
       return;
     }
-    if (!cod) {
+
+    const lista = ordenarCodigos(entrada.codigos);
+    if (!lista.length) {
       out.innerHTML = '<div class="res-error">El símbolo existe en la base, pero no tiene código asignado.</div>';
-      out.hidden = false;
       return;
     }
+
+    // Todos los códigos en paralelo; después se valida que la consulta siga vigente
+    const productos = await Promise.all(lista.map(cod => buscarProducto(cod)));
+    if (mid !== busquedaStd || estado.std !== e) return;
+    if (normalizar($('simStd').value) !== claveSim) return;
 
     const avisos = [];
-    if (e.base.repetidos.has(sim)) {
-      avisos.push('Este símbolo aparece repetido en la base con códigos distintos. Se muestra el primero. Revisá la base.');
-    }
-    const otros = [...(e.base.codigos.get(cod) || [])].filter(s => s !== sim);
-    if (otros.length) {
-      avisos.push(`El código ${cod} también está asociado a los símbolos: ${otros.join(', ')}. Revisá la base antes de usarlo.`);
-    }
-
-    const producto = await buscarProducto(cod);
-    if (estado.std !== e || $('simStd').value.trim() !== sim) return;   // cambió la consulta mientras tanto
-
-    let detalle;
-    if (!producto.ok) {
-      detalle = '<div class="res-sin">No se pudo cargar la base de productos. Verificá tu conexión.</div>';
-    } else if (!producto.nombre) {
-      detalle = '<div class="res-sin">Este código no figura en la base de productos.</div>';
-    } else {
-      // Orden por relevancia: detalle (grande), marca (destacada) y datos menores (chicos)
-      const dato = (etiqueta, valor) => valor
-        ? `<span class="res-dato"><span class="res-label">${etiqueta}</span> ${esc(valor)}</span>`
-        : '';
-      const menores = [
-        dato('CÓD. ALT.', producto.alt),
-        dato('CARACTERÍSTICA', producto.caracteristica),
-        dato('CANT. POR BULTO', producto.bulto),
-        dato('TIPO DE REPOSICIÓN', producto.reposicion)
-      ].join('');
-      detalle = `<div class="res-detalle">${esc(producto.nombre)}</div>` +
-        (producto.marca ? `<div class="res-marca-principal"><span class="res-label">MARCA</span>${esc(producto.marca)}</div>` : '') +
-        (menores ? `<div class="res-menores">${menores}</div>` : '');
-      if (producto.repetido) {
-        avisos.push(`El código ${cod} aparece en la base de productos con nombres distintos. Se muestra el primero.`);
+    for (const cod of lista) {
+      if (e.base.duplicados.has(`${claveSim}||${cod}`)) {
+        avisos.push(`El símbolo aparece repetido en la base con el mismo código ${cod}. Se ignoraron las filas duplicadas.`);
+      }
+      const otros = [...(e.base.codigos.get(cod) || [])].filter(s => s !== entrada.simbolo);
+      if (otros.length) {
+        avisos.push(`El código ${cod} también está asociado a los símbolos: ${otros.join(', ')}. Revisá la base antes de usarlo.`);
       }
     }
+    if (e.base.sinCodigo.has(claveSim)) {
+      avisos.push('El símbolo también aparece en la base sin código asignado. Se muestran solo los códigos cargados.');
+    }
 
-    out.innerHTML =
-      '<div class="res-fila">' +
-        '<div><div class="res-label">CÓDIGO · clic para copiar</div>' +
+    const bloques = lista.map((cod, i) => {
+      const detalle = detalleCodigo(productos[i]);
+      if (detalle.aviso) avisos.push(`El código ${cod} ${detalle.aviso}`);
+      return '<div class="res-fila res-bloque">' +
+        '<div><div class="res-label">' +
+          `CÓDIGO${lista.length > 1 ? ` ${i + 1} de ${lista.length}` : ''} · clic para copiar` +
+        '</div>' +
         `<span class="code-badge grande copiable" data-copiar="${esc(cod)}" title="Haz clic para copiar">${esc(cod)}</span></div>` +
-        `<div class="res-col-detalle"><div class="res-label">DETALLE</div>${detalle}</div>` +
-      '</div>' +
+        `<div class="res-col-detalle"><div class="res-label">DETALLE</div>${detalle.html}</div>` +
+      '</div>';
+    }).join('');
+
+    const encabezado = lista.length > 1
+      ? `<div class="res-label res-encabezado">CÓDIGOS · ${lista.length} encontrados para «${esc(entrada.simbolo)}»</div>`
+      : '';
+
+    out.innerHTML = encabezado + bloques +
       avisos.map(a => `<div class="advertencia">⚠️ ${esc(a)}</div>`).join('');
     out.hidden = false;
   }
@@ -796,7 +1001,12 @@
   // Limpia la tabla, el resumen y las advertencias; el cliente y el archivo cargado se reinician
   $('btnLimpiarAdv').addEventListener('click', () => limpiarResultado('adv'));
   $('simStd').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); buscarStd(); } });
-  $('simStd').addEventListener('input', () => { $('resStd').hidden = true; });
+  // Al cambiar el símbolo se limpia el resultado anterior
+  $('simStd').addEventListener('input', () => {
+    busquedaStd++;
+    $('resStd').hidden = true;
+    $('resStd').innerHTML = '';
+  });
 
   // ---------- Búsqueda avanzada ----------
   function renderAdv() {
@@ -831,26 +1041,28 @@
 
   function mostrarResumenAdv(extra = []) {
     const e = estado.adv;
-    const total = resultadosAdv.length;
+    const totalFilas = resultadosAdv.length;
+    const totalSimbolos = new Set(resultadosAdv.map(r => r.item)).size;
     const encontrados = resultadosAdv.filter(r => r.codigo !== '0').length;
     const resumen = $('resumenAdv');
     resumen.innerHTML =
-      `<span>Total: ${total}</span><span>Encontrados: ${encontrados}</span><span>No encontrados (código 0): ${total - encontrados}</span>`;
+      `<span>Símbolos: ${totalSimbolos}</span><span>Filas (una por código): ${totalFilas}</span><span>Encontrados: ${encontrados}</span><span>No encontrados (código 0): ${totalFilas - encontrados}</span>`;
     resumen.hidden = false;
 
     // Advertencias (sin modificar datos)
     const avisos = [];
     const codigosCompartidos = new Set();
-    const simbolosRepetidos = new Set();
+    const simbolosDuplicados = new Set();
     for (const r of resultadosAdv) {
-      if (r.codigo !== '0' && (e.base.codigos.get(r.codigo)?.size || 0) > 1) codigosCompartidos.add(r.codigo);
-      if (e.base.repetidos.has(r.simbolo)) simbolosRepetidos.add(r.simbolo);
+      if (r.codigo === '0') continue;
+      if ((e.base.codigos.get(r.codigo)?.size || 0) > 1) codigosCompartidos.add(r.codigo);
+      if (e.base.duplicados.has(`${normalizar(r.simbolo)}||${r.codigo}`)) simbolosDuplicados.add(r.simbolo);
     }
     if (codigosCompartidos.size) {
       avisos.push(`${codigosCompartidos.size} código(s) están asociados a más de un símbolo en la base: ${[...codigosCompartidos].join(', ')}. Se muestran tal como están en la base.`);
     }
-    if (simbolosRepetidos.size) {
-      avisos.push(`${simbolosRepetidos.size} símbolo(s) aparecen repetidos en la base con códigos distintos: ${[...simbolosRepetidos].join(', ')}. Se muestra el primero.`);
+    if (simbolosDuplicados.size) {
+      avisos.push(`${simbolosDuplicados.size} símbolo(s) aparecen repetidos en la base con el mismo código: ${[...simbolosDuplicados].join(', ')}. Se ignoraron las filas duplicadas.`);
     }
     renderAvisos($('advertenciasAdv'), [...avisos, ...extra]);
   }
@@ -858,7 +1070,7 @@
   $('archivoAdv').addEventListener('change', async ev => {
     const file = ev.target.files[0];
     const e = estado.adv;
-    if (!file || !e) return;
+    if (!file || !e || e.estado !== 'ok') return;
     try {
       if (typeof XLSX === 'undefined') throw new Error('No se pudo cargar la librería de Excel. Revisá tu conexión.');
       const libro = XLSX.read(await file.arrayBuffer(), { type: 'array' });
@@ -873,8 +1085,17 @@
       const res = [];
       for (let r = 1; r <= fin; r++) {
         const simbolo = String((filas[r] || [])[0] ?? '').trim();
-        const codigo = simbolo ? (e.base.simbolos.get(simbolo) || '0') : '0';
-        res.push({ item: r, simbolo, codigo, detalle: '', marca: '', alt: '', caracteristica: '', bulto: '', reposicion: '' });
+        const entrada = simbolo ? e.base.porSimbolo.get(normalizar(simbolo)) : null;
+        // Un símbolo puede tener varios códigos: una fila por código
+        const lista = entrada && entrada.codigos.length ? ordenarCodigos(entrada.codigos) : ['0'];
+        for (const codigo of lista) {
+          res.push({
+            item: r,
+            simbolo: entrada ? entrada.simbolo : simbolo,
+            codigo,
+            detalle: '', marca: '', alt: '', caracteristica: '', bulto: '', reposicion: ''
+          });
+        }
       }
 
       // Detalle del artículo desde productos.csv (columna Nombre)
@@ -921,7 +1142,7 @@
   });
 
   $('btnExport').addEventListener('click', () => {
-    if (!resultadosAdv.length || !estado.adv) return;
+    if (!resultadosAdv.length || !estado.adv || estado.adv.estado !== 'ok') return;
     const datos = resultadosAdv.map(r => ({
       'NRO ITEM': r.item, 'SIMBOLO': r.simbolo, 'CODIGO': r.codigo, 'DETALLE': r.detalle, 'MARCA': r.marca,
       'CÓD. ALT.': r.alt, 'CARACTERÍSTICA': r.caracteristica, 'CANT. POR BULTO': r.bulto, 'TIPO DE REPOSICIÓN': r.reposicion
